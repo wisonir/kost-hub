@@ -223,7 +223,7 @@ function updateUI() {
   const tot = state.kpi.totalUnits || 1;
   document.getElementById("kpiOccupancy").innerText = `${occ}/${tot}`;
   document.getElementById("sidebarOccupancyText").innerText = `${occ}/${tot}`;
-  
+
   const pct = Math.round((occ / tot) * 100);
   document.getElementById("kpiOccupancyPercent").innerText = `${pct}% Terisi`;
   document.getElementById("sidebarOccupancyBar").style.width = `${pct}%`;
@@ -248,15 +248,18 @@ function renderRoomMatrix() {
   grid.innerHTML = "";
 
   const filtered = state.rooms.filter(room => {
-    const matchFilter = 
+    const matchFilter =
       state.activeFilter === "ALL" ? true :
-      state.activeFilter === "OCCUPIED" ? (room.status === "OCCUPIED" || room.status === "DUE_TOMORROW") :
-      state.activeFilter === "OVERDUE" ? room.status === "OVERDUE" :
-      state.activeFilter === "VACANT" ? room.status === "VACANT" : true;
+        state.activeFilter === "OCCUPIED" ? (room.status === "OCCUPIED" || room.status === "DUE_TOMORROW") :
+          state.activeFilter === "OVERDUE" ? room.status === "OVERDUE" :
+            state.activeFilter === "VACANT" ? room.status === "VACANT" : true;
 
-    const matchSearch = 
-      room.number.toLowerCase().includes(state.searchKeyword) ||
-      (room.tenant && room.tenant.toLowerCase().includes(state.searchKeyword));
+    // Aman untuk tipe data Number, String, maupun null/undefined
+    const roomNumberStr = String(room.number || "").toLowerCase();
+    const tenantStr = String(room.tenant || "").toLowerCase();
+    const keyword = String(state.searchKeyword || "").toLowerCase();
+
+    const matchSearch = roomNumberStr.includes(keyword) || tenantStr.includes(keyword);
 
     return matchFilter && matchSearch;
   });
@@ -354,7 +357,7 @@ function renderDueTable() {
   const tbody = document.getElementById("dueTableBody");
   if (!tbody) return;
   const overdueOrDue = state.rooms.filter(r => r.status === "OVERDUE" || r.status === "DUE_TOMORROW");
-  
+
   if (overdueOrDue.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Semua tagihan sewa berstatus lunas.</td></tr>`;
     return;
@@ -764,7 +767,7 @@ function setRoomFilter(filterType) {
   ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
     const el = document.getElementById(`filter-pill-${type}`);
     if (el) {
-      el.className = (type === filterType) 
+      el.className = (type === filterType)
         ? "px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors"
         : "px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors";
     }
