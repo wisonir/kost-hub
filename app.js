@@ -1,16 +1,28 @@
 /**
- * KostHub OS — Client-Side Application Core Engine (PWA)
- * (FULL ASYNC BACKEND INTEGRATED VERSION)
+ * KostHub OS — Client-Side Router & Application Core Engine
+ * Clean URL Single Page Application (GitHub + Vercel Deployment)
  */
 
-// GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+// GANTI DENGAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyfw7D6YyS-cJt7FT-Tv-so3D6M0JrrMTnSMCF39xak6SNVZtjt0Yo_MLdw-pLS34Z7_w/exec";
+
+// Master URL Mapping
+const ROUTES = {
+  "/": "/home",
+  "/home": "home",
+  "/kamar-unit": "kamar-unit",
+  "/penghuni": "penghuni",
+  "/tagihan": "tagihan",
+  "/buku-kas": "buku-kas",
+  "/kwitansi": "kwitansi",
+  "/login": "login"
+};
 
 const state = {
   token: localStorage.getItem("kosthub_token") || null,
   activeFilter: "ALL",
   searchKeyword: "",
-  activeTab: "dashboard",
+  currentRoute: "/home",
   rooms: [],
   kpi: {
     totalUnits: 0,
@@ -24,33 +36,113 @@ const state = {
   tempWaUrl: ""
 };
 
+// ==================== APP INITIALIZATION & ROUTER ====================
 document.addEventListener("DOMContentLoaded", () => {
-  checkSession();
-  
+  // Tangani path awal dari browser URL
+  const initialPath = window.location.pathname || "/home";
+  const urlParams = new URLSearchParams(window.location.search);
+  const receiptToken = urlParams.get("token") || urlParams.get("t");
+
+  if (receiptToken) {
+    navigateTo(`/kwitansi?token=${receiptToken}`, false);
+    loadPublicReceipt(receiptToken);
+  } else {
+    navigateTo(initialPath === "/" ? "/home" : initialPath, false);
+  }
+
+  // Set Default Date Inputs
   const todayStr = new Date().toISOString().split("T")[0];
   const dueDateInput = document.getElementById("billingDueDate");
   const entryDateInput = document.getElementById("onboardEntryDate");
   if (dueDateInput) dueDateInput.value = todayStr;
   if (entryDateInput) entryDateInput.value = todayStr;
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const receiptToken = urlParams.get("token") || urlParams.get("t");
-  if (receiptToken) {
-    loadPublicReceipt(receiptToken);
-  }
 });
 
-// ==================== AUTHENTICATION ====================
-function checkSession() {
-  const loginModal = document.getElementById("loginModal");
-  if (!state.token) {
-    loginModal.classList.remove("hidden");
+// Event Listener tombol Back / Forward di Browser
+window.addEventListener("popstate", (event) => {
+  const path = (event.state && event.state.path) ? event.state.path : window.location.pathname;
+  navigateTo(path, false);
+});
+
+// Navigasi Router Utama
+function navigateTo(path, pushState = true) {
+  const urlParts = path.split("?");
+  const cleanPath = urlParts[0];
+  const queryStr = urlParts[1] ? `?${urlParts[1]}` : "";
+
+  // Auth Guard
+  if (!state.token && cleanPath !== "/login" && cleanPath !== "/kwitansi") {
+    navigateTo("/login", true);
+    return;
+  }
+
+  if (state.token && cleanPath === "/login") {
+    navigateTo("/home", true);
+    return;
+  }
+
+  const targetView = ROUTES[cleanPath] || "home";
+  state.currentRoute = cleanPath;
+
+  if (pushState && window.location.pathname !== cleanPath) {
+    window.history.pushState({ path: cleanPath }, "", `${cleanPath}${queryStr}`);
+  }
+
+  renderView(targetView);
+}
+
+// Render DOM View
+function renderView(viewId) {
+  // Sembunyikan semua kontainer view
+  ["login", "home", "kamar-unit", "penghuni", "tagihan", "buku-kas", "kwitansi"].forEach(id => {
+    const el = document.getElementById(`view-${id}`);
+    if (el) el.classList.add("hidden");
+  });
+
+  // Tampilkan View Aktif
+  const activeEl = document.getElementById(`view-${viewId}`);
+  if (activeEl) activeEl.classList.remove("hidden");
+
+  // Kontrol Sidebar & Topbar (Sembunyikan di Login & Kwitansi)
+  const sidebar = document.getElementById("appSidebar");
+  const header = document.getElementById("appHeader");
+  const bottomNav = document.getElementById("appBottomNav");
+
+  if (viewId === "login" || viewId === "kwitansi") {
+    if (sidebar) sidebar.classList.add("!hidden");
+    if (header) header.classList.add("!hidden");
+    if (bottomNav) bottomNav.classList.add("!hidden");
   } else {
-    loginModal.classList.add("hidden");
+    if (sidebar) sidebar.classList.remove("!hidden");
+    if (header) header.classList.remove("!hidden");
+    if (bottomNav) bottomNav.classList.remove("!hidden");
+    updateNavStyles(viewId);
+  }
+
+  // Pemicu Fetch Sesuai Halaman
+  if (viewId === "home") {
     fetchDashboardData();
+  } else if (["kamar-unit", "penghuni", "tagihan", "buku-kas"].includes(viewId)) {
+    loadMasterTabData();
   }
 }
 
+function updateNavStyles(activeRoute) {
+  ["home", "kamar-unit", "penghuni", "tagihan", "buku-kas"].forEach(route => {
+    const navD = document.getElementById(`nav-${route}`);
+    const navM = document.getElementById(`bnav-${route}`);
+
+    if (route === activeRoute) {
+      if (navD) navD.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-brand-600 text-white transition-colors shadow-sm";
+      if (navM) navM.className = "flex flex-col items-center gap-1 text-brand-600";
+    } else {
+      if (navD) navD.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors";
+      if (navM) navM.className = "flex flex-col items-center gap-1 text-slate-500";
+    }
+  });
+}
+
+// ==================== AUTHENTICATION ====================
 async function handleLogin() {
   const pinInput = document.getElementById("inputPin");
   const btnLogin = document.getElementById("btnLogin");
@@ -71,26 +163,25 @@ async function handleLogin() {
     if (res.status === "success") {
       state.token = res.data.token;
       localStorage.setItem("kosthub_token", state.token);
-      document.getElementById("loginModal").classList.add("hidden");
       showToast("Selamat datang di KostHub OS!", "success");
-      fetchDashboardData();
+      navigateTo("/home");
     } else {
       loginError.innerText = res.message || "PIN tidak sesuai.";
       loginError.classList.remove("hidden");
     }
   } catch (err) {
-    loginError.innerText = "Gagal terhubung ke Apps Script: " + err.message;
+    loginError.innerText = "Koneksi API gagal: " + err.message;
     loginError.classList.remove("hidden");
   } finally {
     btnLogin.disabled = false;
-    btnLogin.innerText = "Masuk ke Dashboard";
+    btnLogin.innerText = "Masuk ke Sistem";
   }
 }
 
 function handleLogout() {
   localStorage.removeItem("kosthub_token");
   state.token = null;
-  location.reload();
+  navigateTo("/login");
 }
 
 // ==================== API CLIENT GATEWAY ====================
@@ -108,22 +199,19 @@ async function callApi(action, payload = {}) {
     body: requestBody
   });
 
-  if (!response.ok) throw new Error("Jaringan bermasalah (" + response.status + ")");
+  if (!response.ok) throw new Error("HTTP Status " + response.status);
   return await response.json();
 }
 
-// ==================== FETCH & RENDER DASHBOARD ====================
+// ==================== DASHBOARD & DATA FETCH ====================
 async function fetchDashboardData() {
-  showToast("Menyinkronkan data Google Sheets...", "info");
+  showToast("Menyinkronkan Google Sheets...", "info");
   try {
     const res = await callApi("getDashboardData");
     if (res.status === "success") {
       state.rooms = res.data.rooms || [];
       state.kpi = res.data.kpi || state.kpi;
       updateUI();
-      showToast("Data berhasil dimuat!", "success");
-    } else {
-      showToast(res.message, "error");
     }
   } catch (err) {
     showToast("Gagal memuat: " + err.message, "error");
@@ -131,12 +219,6 @@ async function fetchDashboardData() {
 }
 
 function updateUI() {
-  renderKpiCards();
-  renderRoomMatrix();
-  renderDueTable();
-}
-
-function renderKpiCards() {
   const occ = state.kpi.occupiedUnits || 0;
   const tot = state.kpi.totalUnits || 1;
   document.getElementById("kpiOccupancy").innerText = `${occ}/${tot}`;
@@ -155,10 +237,14 @@ function renderKpiCards() {
   document.getElementById("count-occupied").innerText = state.rooms.filter(r => r.status === "OCCUPIED" || r.status === "DUE_TOMORROW").length;
   document.getElementById("count-overdue").innerText = state.rooms.filter(r => r.status === "OVERDUE").length;
   document.getElementById("count-vacant").innerText = state.rooms.filter(r => r.status === "VACANT").length;
+
+  renderRoomMatrix();
+  renderDueTable();
 }
 
 function renderRoomMatrix() {
   const grid = document.getElementById("roomMatrixGrid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   const filtered = state.rooms.filter(room => {
@@ -176,7 +262,7 @@ function renderRoomMatrix() {
   });
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs font-semibold">Tidak ada unit kamar dalam kategori ini.</div>`;
+    grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs font-semibold">Tidak ada unit kamar dalam filter ini.</div>`;
     return;
   }
 
@@ -227,7 +313,7 @@ function renderRoomMatrix() {
             <span class="font-mono font-extrabold text-red-600">${formatRupiah(room.debt || room.price)}</span>
           </div>
         </div>
-        <div class="mt-4 pt-3 border-t border-red-100 flex gap-2">
+        <div class="mt-4 pt-3 border-red-100 flex gap-2">
           <button onclick="dispatchOverdueWhatsApp('${room.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1">
             <span>💬</span> Tagih WA
           </button>
@@ -260,13 +346,13 @@ function renderRoomMatrix() {
         </div>
       `;
     }
-
     grid.appendChild(card);
   });
 }
 
 function renderDueTable() {
   const tbody = document.getElementById("dueTableBody");
+  if (!tbody) return;
   const overdueOrDue = state.rooms.filter(r => r.status === "OVERDUE" || r.status === "DUE_TOMORROW");
   
   if (overdueOrDue.length === 0) {
@@ -288,71 +374,85 @@ function renderDueTable() {
   `).join("");
 }
 
-// ==================== ASYNC: DAFTAR PENGHUNI BARU ====================
-function openOnboardModal(unitId) {
-  const room = state.rooms.find(r => r.id === unitId);
-  document.getElementById("onboardUnitId").value = unitId;
-  document.getElementById("onboardRoomTitle").innerText = `Registrasi Tamu Baru — ${room ? room.number : ''}`;
-  state.tempKtpBase64 = "";
-  document.getElementById("ktpPreviewContainer").classList.add("hidden");
-  openModal("modalOnboard");
-}
-
-function previewKtpImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    state.tempKtpBase64 = e.target.result;
-    document.getElementById("ktpImagePreview").src = e.target.result;
-    document.getElementById("ktpPreviewContainer").classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
-}
-
-async function submitOnboardingTenant() {
-  const name = document.getElementById("onboardName").value.trim();
-  const wa = document.getElementById("onboardWa").value.trim();
-  const unitId = document.getElementById("onboardUnitId").value;
-  const deposit = document.getElementById("onboardDeposit").value;
-  const entryDate = document.getElementById("onboardEntryDate").value;
-
-  if (!name || !wa) {
-    alert("Harap isi Nama Lengkap dan Nomor WhatsApp.");
-    return;
-  }
-
-  const btn = document.getElementById("btnSubmitOnboard");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan ke Sheets...";
-
+// ==================== MASTER TABLES FETCH ====================
+async function loadMasterTabData() {
   try {
-    const res = await callApi("registerTenant", {
-      unitId: unitId,
-      name: name,
-      phone: wa,
-      deposit: deposit,
-      entryDate: entryDate,
-      ktpBase64: state.tempKtpBase64
-    });
-
+    const res = await callApi("getMasterData");
     if (res.status === "success") {
-      closeModal("modalOnboard");
-      showToast("Penghuni berhasil disimpan ke Sheets!", "success");
-      await fetchDashboardData();
-    } else {
-      alert("Gagal: " + res.message);
+      renderMasterUnits(res.data.units || []);
+      renderMasterTenants(res.data.tenants || []);
+      renderMasterExpenses(res.data.expenses || []);
+      renderMasterInvoices(res.data.invoices || []);
     }
-  } catch (err) {
-    alert("Terjadi kesalahan koneksi: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Simpan & Aktifkan Kamar";
+  } catch (e) {
+    console.error("Gagal muat master data:", e);
   }
 }
 
-// ==================== ASYNC: TERBITKAN TAGIHAN ====================
+function renderMasterUnits(units) {
+  const tbody = document.getElementById("unitMasterTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = units.map(u => `
+    <tr>
+      <td class="p-3 font-bold">${u[1]}</td>
+      <td class="p-3">Lantai ${u[2]}</td>
+      <td class="p-3">${u[3]}</td>
+      <td class="p-3 font-mono font-bold">${formatRupiah(u[4])}</td>
+      <td class="p-3 text-slate-500">${u[5]}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u[6] === 'OCCUPIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${u[6]}</span></td>
+      <td class="p-3 text-right font-mono text-[11px] text-slate-400">${u[0]}</td>
+    </tr>
+  `).join("");
+}
+
+function renderMasterTenants(tenants) {
+  const tbody = document.getElementById("tenantMasterTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = tenants.map(t => `
+    <tr>
+      <td class="p-3 font-bold text-slate-900">${t[1]}</td>
+      <td class="p-3 font-mono text-slate-600">${t[3]}</td>
+      <td class="p-3">${t[5] ? new Date(t[5]).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="p-3 font-mono font-bold">${formatRupiah(t[7])}</td>
+      <td class="p-3">${t[8] && t[8].startsWith('http') ? `<a href="${t[8]}" target="_blank" class="text-brand-600 font-bold underline">Lihat KTP</a>` : '<span class="text-slate-400">Tidak Ada</span>'}</td>
+      <td class="p-3 text-right"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">${t[9]}</span></td>
+    </tr>
+  `).join("");
+}
+
+function renderMasterInvoices(invoices) {
+  const tbody = document.getElementById("invoiceMasterTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = invoices.map(inv => `
+    <tr>
+      <td class="p-3 font-mono font-bold">${inv[0]}</td>
+      <td class="p-3">${inv[2]}</td>
+      <td class="p-3">${inv[4]}</td>
+      <td class="p-3 font-mono text-slate-500">${inv[5] ? new Date(inv[5]).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="p-3 font-mono font-bold">${formatRupiah(inv[10])}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${inv[11] === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}">${inv[11]}</span></td>
+      <td class="p-3 text-right">
+        <button onclick="navigateTo('/kwitansi?token=${inv[1]}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs font-bold">Kwitansi</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function renderMasterExpenses(expenses) {
+  const tbody = document.getElementById("expenseTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = expenses.map(x => `
+    <tr>
+      <td class="p-3 text-slate-600 font-sans">${x[1] ? new Date(x[1]).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="p-3 font-sans font-bold text-slate-700">${x[2]}</td>
+      <td class="p-3 font-sans">${x[3]}</td>
+      <td class="p-3 font-sans text-slate-500">${x[5]}</td>
+      <td class="p-3 text-right font-bold text-red-600">${formatRupiah(x[4])}</td>
+    </tr>
+  `).join("");
+}
+
+// ==================== ASYNC ACTIONS & MODALS ====================
 function openBillingModal(unitId) {
   const room = state.rooms.find(r => r.id === unitId) || state.rooms[0];
   if (!room) return;
@@ -392,7 +492,7 @@ function calculateBillingTotal() {
 async function submitBillingInvoice() {
   const btn = document.getElementById("btnSubmitBilling");
   btn.disabled = true;
-  btn.innerText = "Menerbitkan ke Sheets...";
+  btn.innerText = "Menerbitkan...";
 
   const unitId = document.getElementById("billingUnitId").value;
   const tenantId = document.getElementById("billingTenantId").value;
@@ -421,6 +521,7 @@ async function submitBillingInvoice() {
     });
 
     if (res.status === "success") {
+      const receiptUrl = `${window.location.origin}/kwitansi?token=${res.data.token}`;
       const message = `Halo Sdr/i *${room ? room.tenant : 'Penghuni'}*,\nBerikut rincian tagihan sewa *${room ? room.number : 'Kamar'}*:\n\n` +
         `• Periode: ${period}\n` +
         `• Sewa Pokok: ${formatRupiah(baseRent)}\n` +
@@ -430,16 +531,14 @@ async function submitBillingInvoice() {
         `*TOTAL TAGIHAN: ${formatRupiah(res.data.total)}*\n` +
         `Jatuh Tempo: ${dueDate}\n\n` +
         `Mohon transfer ke:\n*BCA 1234567890 a.n Hendra Wijaya*\n\n` +
-        `Kwitansi Digital: ${window.location.origin}/?token=${res.data.token}`;
+        `Kwitansi Digital: ${receiptUrl}`;
 
       state.tempWaUrl = `https://wa.me/${(room && room.tenantPhone) ? room.tenantPhone.replace(/^0/, '62') : ''}?text=${encodeURIComponent(message)}`;
       document.getElementById("waMessagePreview").innerText = message;
 
       closeModal("modalBilling");
       openModal("modalWhatsApp");
-      await fetchDashboardData();
-    } else {
-      alert("Gagal menerbitkan tagihan: " + res.message);
+      fetchDashboardData();
     }
   } catch (err) {
     alert("Koneksi gagal: " + err.message);
@@ -450,35 +549,93 @@ async function submitBillingInvoice() {
 }
 
 function dispatchWhatsAppUrl() {
-  if (state.tempWaUrl) {
-    window.open(state.tempWaUrl, "_blank");
-  }
+  if (state.tempWaUrl) window.open(state.tempWaUrl, "_blank");
 }
 
 function dispatchOverdueWhatsApp(unitId) {
   const room = state.rooms.find(r => r.id === unitId);
   if (!room) return;
   const phone = (room.tenantPhone || "").replace(/^0/, '62');
-  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt || room.price)}* saat ini telah jatuh tempo.\n\nMohon konfirmasi pelunasannya melalui transfer BCA 1234567890 a.n Hendra Wijaya. Terima kasih.`;
+  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt || room.price)}* saat ini telah jatuh tempo.\n\nMohon konfirmasi pelunasan transfer BCA 1234567890 a.n Hendra Wijaya. Terima kasih.`;
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 async function confirmPaymentDirect(unitId) {
-  if (!confirm("Konfirmasi bahwa tagihan unit ini telah LUNAS diterima?")) return;
+  if (!confirm("Konfirmasi bahwa sewa unit ini telah LUNAS diterima?")) return;
   try {
     const res = await callApi("confirmPayment", { unitId: unitId });
     if (res.status === "success") {
       showToast("Pembayaran diverifikasi lunas!", "success");
-      await fetchDashboardData();
-    } else {
-      alert("Gagal: " + res.message);
+      fetchDashboardData();
     }
   } catch (e) {
     alert("Koneksi gagal: " + e.message);
   }
 }
 
-// ==================== ASYNC: CATAT PENGELUARAN ====================
+// ==================== ONBOARDING PENGHUNI ====================
+function openOnboardModal(unitId) {
+  const room = state.rooms.find(r => r.id === unitId);
+  document.getElementById("onboardUnitId").value = unitId;
+  document.getElementById("onboardRoomTitle").innerText = `Registrasi Tamu Baru — ${room ? room.number : ''}`;
+  state.tempKtpBase64 = "";
+  document.getElementById("ktpPreviewContainer").classList.add("hidden");
+  openModal("modalOnboard");
+}
+
+function previewKtpImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.tempKtpBase64 = e.target.result;
+    document.getElementById("ktpImagePreview").src = e.target.result;
+    document.getElementById("ktpPreviewContainer").classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitOnboardingTenant() {
+  const name = document.getElementById("onboardName").value.trim();
+  const wa = document.getElementById("onboardWa").value.trim();
+  const unitId = document.getElementById("onboardUnitId").value;
+  const deposit = document.getElementById("onboardDeposit").value;
+  const entryDate = document.getElementById("onboardEntryDate").value;
+
+  if (!name || !wa) {
+    alert("Nama dan No. WhatsApp wajib diisi.");
+    return;
+  }
+
+  const btn = document.getElementById("btnSubmitOnboard");
+  btn.disabled = true;
+  btn.innerText = "Menyimpan ke Sheets...";
+
+  try {
+    const res = await callApi("registerTenant", {
+      unitId: unitId,
+      name: name,
+      phone: wa,
+      deposit: deposit,
+      entryDate: entryDate,
+      ktpBase64: state.tempKtpBase64
+    });
+
+    if (res.status === "success") {
+      closeModal("modalOnboard");
+      showToast("Penghuni berhasil disimpan!", "success");
+      fetchDashboardData();
+    }
+  } catch (err) {
+    alert("Gagal: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Simpan & Aktifkan Kamar";
+  }
+}
+
+// ==================== CATAT BUKU KAS ====================
 function openExpenseModal() {
   openModal("modalExpense");
 }
@@ -508,102 +665,18 @@ async function submitExpenseRecord() {
       closeModal("modalExpense");
       document.getElementById("expenseDescription").value = "";
       document.getElementById("expenseAmount").value = "";
-      showToast("Pengeluaran kas tercatat di Google Sheets!", "success");
-      await fetchDashboardData();
-    } else {
-      alert("Gagal menyimpan: " + res.message);
+      showToast("Pengeluaran kas tercatat!", "success");
+      fetchDashboardData();
     }
   } catch (err) {
-    alert("Koneksi gagal: " + err.message);
+    alert("Gagal: " + err.message);
   } finally {
     btn.disabled = false;
     btn.innerText = "Simpan Transaksi Kas";
   }
 }
 
-// ==================== MASTER TAB SWITCH & LOADER ====================
-async function switchTab(tabId) {
-  state.activeTab = tabId;
-  ["dashboard", "units", "tenants", "cashflow"].forEach(tab => {
-    const view = document.getElementById(`view-${tab}`);
-    const navD = document.getElementById(`nav-${tab}`);
-    const navM = document.getElementById(`bnav-${tab}`);
-
-    if (tab === tabId) {
-      if (view) view.classList.remove("hidden");
-      if (navD) navD.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-brand-600 text-white transition-colors shadow-sm";
-      if (navM) navM.className = "flex flex-col items-center gap-1 text-brand-600";
-    } else {
-      if (view) view.classList.add("hidden");
-      if (navD) navD.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors";
-      if (navM) navM.className = "flex flex-col items-center gap-1 text-slate-500";
-    }
-  });
-
-  if (tabId !== "dashboard") {
-    loadMasterTabData();
-  }
-}
-
-async function loadMasterTabData() {
-  try {
-    const res = await callApi("getMasterData");
-    if (res.status === "success") {
-      renderMasterUnits(res.data.units || []);
-      renderMasterTenants(res.data.tenants || []);
-      renderMasterExpenses(res.data.expenses || []);
-    }
-  } catch (e) {
-    console.error("Gagal load master:", e);
-  }
-}
-
-function renderMasterUnits(units) {
-  const tbody = document.getElementById("unitMasterTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = units.map(u => `
-    <tr>
-      <td class="p-3 font-bold">${u[1]}</td>
-      <td class="p-3">Lantai ${u[2]}</td>
-      <td class="p-3">${u[3]}</td>
-      <td class="p-3 font-mono font-bold">${formatRupiah(u[4])}</td>
-      <td class="p-3 text-slate-500">${u[5]}</td>
-      <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u[6] === 'OCCUPIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${u[6]}</span></td>
-      <td class="p-3 text-right font-mono text-[11px] text-slate-400">${u[0]}</td>
-    </tr>
-  `).join("");
-}
-
-function renderMasterTenants(tenants) {
-  const tbody = document.getElementById("tenantMasterTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = tenants.map(t => `
-    <tr>
-      <td class="p-3 font-bold text-slate-900">${t[1]}</td>
-      <td class="p-3 font-mono text-slate-600">${t[3]}</td>
-      <td class="p-3">${t[5] ? new Date(t[5]).toLocaleDateString('id-ID') : '-'}</td>
-      <td class="p-3 font-mono font-bold">${formatRupiah(t[7])}</td>
-      <td class="p-3">${t[8] && t[8].startsWith('http') ? `<a href="${t[8]}" target="_blank" class="text-brand-600 font-bold underline">Lihat KTP</a>` : '<span class="text-slate-400">Tidak Ada</span>'}</td>
-      <td class="p-3 text-right"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">${t[9]}</span></td>
-    </tr>
-  `).join("");
-}
-
-function renderMasterExpenses(expenses) {
-  const tbody = document.getElementById("expenseTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = expenses.map(x => `
-    <tr>
-      <td class="p-3 text-slate-600 font-sans">${x[1] ? new Date(x[1]).toLocaleDateString('id-ID') : '-'}</td>
-      <td class="p-3 font-sans font-bold text-slate-700">${x[2]}</td>
-      <td class="p-3 font-sans">${x[3]}</td>
-      <td class="p-3 font-sans text-slate-500">${x[5]}</td>
-      <td class="p-3 text-right font-bold text-red-600">${formatRupiah(x[4])}</td>
-    </tr>
-  `).join("");
-}
-
-// ==================== MODAL TAMBAH KAMAR ====================
+// ==================== TAMBAH UNIT KAMAR ====================
 function openAddUnitModal() {
   openModal("modalAddUnit");
 }
@@ -616,7 +689,7 @@ async function submitAddUnit() {
   const meter = document.getElementById("unitMeterInput").value;
 
   if (!num || !price) {
-    alert("Harap isi nomor kamar dan harga sewa.");
+    alert("Harap isi nomor kamar dan tarif sewa.");
     return;
   }
 
@@ -631,16 +704,16 @@ async function submitAddUnit() {
 
     if (res.status === "success") {
       closeModal("modalAddUnit");
-      showToast("Unit kamar baru berhasil ditambahkan!", "success");
-      await fetchDashboardData();
-      await loadMasterTabData();
+      showToast("Unit kamar baru berhasil disimpan!", "success");
+      fetchDashboardData();
+      loadMasterTabData();
     }
   } catch (e) {
     alert("Gagal menambah kamar: " + e.message);
   }
 }
 
-// ==================== KWITANSI VIEW ====================
+// ==================== KWITANSI ROUTE HANDLER ====================
 function viewReceiptDirect(unitId) {
   const room = state.rooms.find(r => r.id === unitId);
   if (!room) return;
@@ -662,7 +735,7 @@ function viewReceiptDirect(unitId) {
     </tr>
   `;
 
-  document.getElementById("receiptContainer").classList.remove("hidden");
+  navigateTo(`/kwitansi?token=${room.id}`);
 }
 
 async function loadPublicReceipt(token) {
@@ -672,17 +745,20 @@ async function loadPublicReceipt(token) {
     if (json.status === "success") {
       document.getElementById("rcptInvId").innerText = json.data.invoiceId;
       document.getElementById("rcptTotalPaid").innerText = formatRupiah(json.data.total);
-      document.getElementById("receiptContainer").classList.remove("hidden");
+      document.getElementById("rcptPaidDate").innerText = json.data.dueDate || "-";
+      document.getElementById("rcptTableItems").innerHTML = `
+        <tr>
+          <td class="py-2 text-slate-700">Sewa Periode: ${json.data.period}</td>
+          <td class="py-2 text-right font-mono font-bold">${formatRupiah(json.data.total)}</td>
+        </tr>
+      `;
     }
   } catch (e) {
-    console.error("Gagal load kwitansi publik:", e);
+    console.error("Gagal load kwitansi:", e);
   }
 }
 
-function closeReceiptView() {
-  document.getElementById("receiptContainer").classList.add("hidden");
-}
-
+// ==================== HELPER UI ====================
 function setRoomFilter(filterType) {
   state.activeFilter = filterType;
   ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
