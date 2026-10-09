@@ -1,21 +1,44 @@
 /* =========================================================
-   KostHub OS — Modern Property Management Styling Tokens
+   KostHub OS — Multi-Tenant SaaS Styling Tokens
    ========================================================= */
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
 
+/* Animasi Fade-In Modal & Page */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Shimmer Loading Skeleton */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton-shimmer {
@@ -24,25 +47,18 @@
   animation: shimmer 1.5s infinite;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Print Specifications for Digital Receipts (Thermal 80mm & A4/A5) */
+/* Format Print Kwitansi Digital */
 @media print {
   body * {
     visibility: hidden;
   }
-  #receiptContainer, #receiptContainer * {
+
+  #view-kwitansi,
+  #view-kwitansi * {
     visibility: visible;
   }
-  #receiptContainer {
+
+  #view-kwitansi {
     position: absolute;
     left: 0;
     top: 0;
@@ -51,9 +67,11 @@
     padding: 10mm;
     background: white;
   }
+
   .no-print {
     display: none !important;
   }
+
   .printable-receipt {
     border: none !important;
     box-shadow: none !important;

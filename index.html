@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>KostHub OS — Property Manager</title>
-  
-  <!-- PWA Meta Tags -->
+  <title>KostHub OS — Multi-Tenant Property OS</title>
+
   <meta name="theme-color" content="#4F46E5" />
-  <meta name="description" content="Sistem Manajemen Properti Kost & Kontrakan Modern PWA" />
+  <meta name="description" content="Satu Platform Multi-Tenant untuk Otomasi Bisnis Kost & Kontrakan Modern" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="/manifest.json" />
 
-  <!-- Fonts & CDN -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -41,427 +42,957 @@
   </script>
   <link rel="stylesheet" href="/style.css" />
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col md:flex-row select-none">
 
-  <!-- ==================== VIEW: LOGIN SCREEN (/login) ==================== -->
-  <div id="view-login" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 p-8 text-center animate-fade-in">
-      <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-extrabold shadow-inner">
-        🏢
-      </div>
-      <h2 class="text-2xl font-extrabold text-slate-900">KostHub OS</h2>
-      <p class="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">Property Management System</p>
-      
-      <div class="mt-6 text-left">
-        <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Master PIN Akses Properti</label>
-        <input type="password" id="inputPin" maxlength="6" placeholder="Masukkan PIN" class="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 px-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-transparent transition-all" />
-        <p id="loginError" class="text-red-500 text-xs font-semibold mt-2 hidden text-center">PIN tidak sesuai. Silakan coba lagi.</p>
-      </div>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col select-none">
 
-      <button onclick="handleLogin()" id="btnLogin" class="w-full mt-6 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center gap-2">
-        <span>Masuk ke Sistem</span>
-      </button>
-      
-      <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Edge GAS API</span>
-        <span>Route: /login</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== DESKTOP SIDEBAR ==================== -->
-  <aside id="appSidebar" class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 min-h-screen p-5 shrink-0 justify-between">
-    <div>
-      <div class="flex items-center gap-3 px-2 py-3 mb-6 cursor-pointer" onclick="navigateTo('/home')">
-        <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-brand-600/20">
-          K
-        </div>
-        <div>
-          <h1 class="font-extrabold text-base leading-tight tracking-tight text-slate-900">KostHub OS</h1>
-          <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Property Manager</p>
-        </div>
-      </div>
-
-      <!-- Navigation Clean URLs -->
-      <nav class="space-y-1 text-sm font-semibold">
-        <a href="/home" onclick="event.preventDefault(); navigateTo('/home');" id="nav-home" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-brand-600 text-white transition-colors shadow-sm">
-          <span>📊</span> Dashboard
-        </a>
-        <a href="/kamar-unit" onclick="event.preventDefault(); navigateTo('/kamar-unit');" id="nav-kamar-unit" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
-          <span>🚪</span> Kamar & Unit
-        </a>
-        <a href="/penghuni" onclick="event.preventDefault(); navigateTo('/penghuni');" id="nav-penghuni" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
-          <span>👥</span> Penghuni
-        </a>
-        <a href="/tagihan" onclick="event.preventDefault(); navigateTo('/tagihan');" id="nav-tagihan" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
-          <span>📑</span> Tagihan Bulanan
-        </a>
-        <a href="/buku-kas" onclick="event.preventDefault(); navigateTo('/buku-kas');" id="nav-buku-kas" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
-          <span>💰</span> Buku Kas
-        </a>
-      </nav>
-    </div>
-
-    <!-- Sidebar Footer -->
-    <div class="border-t border-slate-100 pt-4 space-y-3">
-      <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-        <div class="flex justify-between text-xs font-bold text-slate-700">
-          <span>Kapasitas Terisi</span>
-          <span id="sidebarOccupancyText" class="font-mono text-brand-600">0/0</span>
-        </div>
-        <div class="w-full bg-slate-200 h-2 rounded-full mt-2 overflow-hidden">
-          <div id="sidebarOccupancyBar" class="bg-brand-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-        </div>
-      </div>
-      <button onclick="handleLogout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-        <span>🚪</span> Keluar Sistem
-      </button>
-    </div>
-  </aside>
-
-  <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
-  <div class="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
-    
-    <!-- Top Header Bar -->
-    <header id="appHeader" class="bg-white border-b border-slate-200 px-4 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      <div class="flex items-center gap-3">
-        <div class="md:hidden w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-black text-sm" onclick="navigateTo('/home')">
-          K
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 id="headerPropertyName" class="text-sm md:text-base font-extrabold text-slate-900 leading-tight">Graha Melati Batam</h2>
-            <span class="text-[10px] bg-indigo-50 text-brand-600 px-2 py-0.5 rounded-full font-bold uppercase hidden md:inline">Eksklusif</span>
+  <!-- ==================== VIEW 0: PUBLIC MARKETING LANDING PAGE ( / ) ==================== -->
+  <div id="view-landing" class="min-h-screen flex flex-col bg-white">
+    <!-- Navbar Publik -->
+    <header class="border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur-md z-40">
+      <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('/')">
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-brand-600/30">
+            K
           </div>
-          <p class="text-[11px] text-slate-500 hidden md:block">Jl. Ahmad Yani No. 12, Batam Kota • Google Sheets Sync</p>
+          <div>
+            <h1 class="font-extrabold text-lg tracking-tight text-slate-900">KostHub OS</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Multi-Tenant Platform</p>
+          </div>
         </div>
-      </div>
-
-      <div class="flex items-center gap-2.5">
-        <button onclick="openExpenseModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
-          <span>+</span> Catat Kas
-        </button>
-        <button onclick="openQuickBillingModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20 transition-all flex items-center gap-1.5">
-          <span>⚡</span> + Buat Tagihan
-        </button>
-        <button onclick="window.print()" class="hidden md:flex px-3.5 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all items-center gap-1.5">
-          <span>🖨️</span> PDF
-        </button>
+        <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-slate-600">
+          <a href="#fitur" class="hover:text-brand-600 transition-colors">Fitur Unggulan</a>
+          <a href="#pricing" class="hover:text-brand-600 transition-colors">Pilihan Paket</a>
+          <a href="#faq" class="hover:text-brand-600 transition-colors">FAQ</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button onclick="navigateTo('/login')"
+            class="px-4 py-2 text-xs md:text-sm font-bold text-slate-700 hover:text-brand-600 transition-colors">
+            Masuk Portal
+          </button>
+          <button onclick="openRegisterModal('PRO')"
+            class="px-4 py-2 md:px-5 md:py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-extrabold rounded-xl shadow-md shadow-brand-600/30 transition-all">
+            Coba Gratis 14 Hari
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Main Views Container -->
-    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+    <!-- Hero Section -->
+    <section class="py-16 md:py-24 px-4 md:px-8 max-w-7xl mx-auto text-center space-y-6">
+      <div
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-brand-700 text-xs font-bold animate-pulse">
+        <span>🚀</span> Sistem Operasi Manajemen Hunian Sewa Kost & Kontrakan
+      </div>
+      <h2 class="text-3xl md:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
+        Otomasi Bisnis Kost & Kontrakan Anda <span class="text-brand-600 underline decoration-indigo-200">Tanpa
+          Ribet</span>
+      </h2>
+      <p class="text-sm md:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
+        Platform SaaS lengkap: otomatisasi tagihan sewa bulanan, kalkulasi pemakaian meteran listrik/air kWh akurat,
+        pembukuan kas masuk/keluar, dan delegasi tugas staf lapangan terisolasi.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
+        <button onclick="openRegisterModal('PRO')"
+          class="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl shadow-xl shadow-brand-600/30 transition-all text-sm flex items-center justify-center gap-2">
+          <span>🚀</span> Mulai Coba Gratis 14 Hari
+        </button>
+        <button onclick="navigateTo('/login')"
+          class="w-full sm:w-auto px-8 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl transition-all text-sm">
+          Akses Akun Demo
+        </button>
+      </div>
 
-      <!-- ==================== VIEW 1: /home ==================== -->
-      <div id="view-home" class="space-y-6">
-        <!-- 4 KPI Cards Strip -->
-        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Okupansi</span>
-              <span class="p-2 bg-indigo-50 text-brand-600 rounded-xl text-sm">🛏️</span>
+      <!-- Preview Mockup Card Hero -->
+      <div class="pt-10 max-w-5xl mx-auto">
+        <div class="bg-slate-900 p-2 md:p-4 rounded-3xl shadow-2xl border border-slate-800">
+          <div class="bg-slate-50 rounded-2xl p-4 md:p-6 text-left border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                <span class="text-xs font-mono font-bold text-slate-500 ml-2">app.kosthub.id/home (Live Preview)</span>
+              </div>
+              <span
+                class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">●
+                Multi-Tenant Isolated</span>
             </div>
-            <div class="mt-3">
-              <div class="text-2xl md:text-3xl font-extrabold font-mono text-slate-900" id="kpiOccupancy">0/0</div>
-              <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
-                <span id="kpiOccupancyPercent">0% Terisi</span>
-                <span class="text-emerald-600 font-bold">+5% bln lalu</span>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Okupansi Kamar</span>
+                <p class="text-xl font-extrabold font-mono text-slate-900 mt-1">18 / 20 Unit</p>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Omzet Masuk</span>
+                <p class="text-xl font-extrabold font-mono text-emerald-600 mt-1">Rp 27.500.000</p>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-[10px] font-bold text-red-500 uppercase">Tunggakan</span>
+                <p class="text-xl font-extrabold font-mono text-red-600 mt-1">Rp 3.200.000</p>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-[10px] font-bold text-brand-600 uppercase">Kas Bersih (Net)</span>
+                <p class="text-xl font-extrabold font-mono text-brand-600 mt-1">Rp 21.450.000</p>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Omzet Bulan Ini</span>
-              <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-sm">💵</span>
-            </div>
-            <div class="mt-3">
-              <div class="text-xl md:text-2xl font-extrabold font-mono text-slate-900" id="kpiIncome">Rp 0</div>
-              <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
-                <span>Penerimaan Sewa</span>
-                <span class="text-emerald-600 font-bold">Lunas</span>
-              </div>
-            </div>
-          </div>
+    <!-- Pricing Tiers Section -->
+    <section id="pricing" class="py-16 md:py-24 bg-slate-50 border-t border-slate-200 px-4 md:px-8">
+      <div class="max-w-7xl mx-auto space-y-12 text-center">
+        <div>
+          <span
+            class="text-xs font-black uppercase tracking-widest text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">Investasi
+            Terjangkau</span>
+          <h3 class="text-2xl md:text-4xl font-extrabold text-slate-900 mt-3">Pilih Paket Sesuai Skala Properti Anda
+          </h3>
+          <p class="text-xs md:text-sm text-slate-500 mt-1">Seluruh paket mencakup garansi kepuasan 14 hari tanpa ikatan
+            kontrak rumit.</p>
+        </div>
 
-          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-              <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Total Tunggakan</span>
-              <span class="p-2 bg-red-50 text-red-600 rounded-xl text-sm">⚠️</span>
-            </div>
-            <div class="mt-3">
-              <div class="text-xl md:text-2xl font-extrabold font-mono text-red-600" id="kpiOverdue">Rp 0</div>
-              <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                <span class="text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-full" id="kpiOverdueCount">0 Kamar Menunggak</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kas Bersih (Net)</span>
-              <span class="p-2 bg-blue-50 text-blue-600 rounded-xl text-sm">👛</span>
-            </div>
-            <div class="mt-3">
-              <div class="text-xl md:text-2xl font-extrabold font-mono text-brand-600" id="kpiNetCash">Rp 0</div>
-              <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                <span>Pemasukan - Pengeluaran</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Room Matrix Section -->
-        <section class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-6xl mx-auto">
+          <!-- Card Starter -->
+          <div
+            class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 class="text-base md:text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <span>🔲</span> Matriks Okupansi & Status Kamar
-              </h3>
-              <p class="text-xs text-slate-500">Klik unit kamar untuk penagihan instan atau audit data penghuni</p>
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Starter</span>
+                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">1 - 5
+                  Kamar</span>
+              </div>
+              <div class="mt-4">
+                <span class="text-3xl md:text-4xl font-black font-mono text-slate-900">Rp 49.000</span>
+                <span class="text-xs text-slate-400 font-semibold">/ bulan</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Cocok untuk pemilik kost pemula atau kontrakan paviliun keluarga.
+              </p>
+              <ul class="mt-6 space-y-2.5 text-xs text-slate-700 font-medium">
+                <li class="flex items-center gap-2"><span>✅</span> Kapasitas Maks. 5 Pintu Kamar</li>
+                <li class="flex items-center gap-2"><span>✅</span> 1 Akun Akses Owner Penuh</li>
+                <li class="flex items-center gap-2"><span>✅</span> Tagihan WhatsApp 1-Klik Instan</li>
+                <li class="flex items-center gap-2"><span>✅</span> Kwitansi Digital Otomatis</li>
+                <li class="flex items-center gap-2 text-slate-400"><span>❌</span> Akun Delegasi Staf Lapangan</li>
+              </ul>
             </div>
-            <div class="relative w-full md:w-64">
-              <input type="text" id="searchRoomInput" oninput="filterRooms()" placeholder="Cari unit atau nama..." class="w-full text-xs py-2 pl-8 pr-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-600" />
-              <span class="absolute left-2.5 top-2.5 text-xs text-slate-400">🔍</span>
+            <button onclick="openRegisterModal('STARTER')"
+              class="w-full mt-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors">
+              Pilih Paket Starter
+            </button>
+          </div>
+
+          <!-- Card Pro (Highlight Favorit Juragan) -->
+          <div
+            class="bg-white p-6 md:p-8 rounded-3xl border-2 border-brand-600 shadow-xl flex flex-col justify-between relative hover:shadow-2xl transition-shadow">
+            <div
+              class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md">
+              FAVORIT JURAGAN
             </div>
-          </div>
-
-          <!-- Filter Pills -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold no-scrollbar">
-            <button onclick="setRoomFilter('ALL')" id="filter-pill-ALL" class="px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors">Semua (<span id="count-all">0</span>)</button>
-            <button onclick="setRoomFilter('OCCUPIED')" id="filter-pill-OCCUPIED" class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Terisi (<span id="count-occupied">0</span>)</button>
-            <button onclick="setRoomFilter('OVERDUE')" id="filter-pill-OVERDUE" class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Menunggak (<span id="count-overdue">0</span>)</button>
-            <button onclick="setRoomFilter('VACANT')" id="filter-pill-VACANT" class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Kosong (<span id="count-vacant">0</span>)</button>
-          </div>
-
-          <div id="roomMatrixGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2"></div>
-        </section>
-
-        <!-- Upcoming Due Date Table -->
-        <section class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm md:text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <span>📅</span> Jadwal Penagihan & Siklus Sewa
-            </h3>
-            <span class="text-xs text-slate-400 font-semibold">Prioritas Penagihan</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider">
-                <tr>
-                  <th class="p-3">Unit</th>
-                  <th class="p-3">Penyewa</th>
-                  <th class="p-3">Jatuh Tempo</th>
-                  <th class="p-3">Total Tagihan</th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="dueTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <!-- ==================== VIEW 2: /kamar-unit ==================== -->
-      <div id="view-kamar-unit" class="hidden space-y-4">
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900">Master Data Kamar & Unit</h3>
-            <p class="text-xs text-slate-500">Kelola tarif dasar, tipe kamar, fasilitas, dan stand meteran</p>
-          </div>
-          <button onclick="openAddUnitModal()" class="px-3.5 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20">
-            + Tambah Kamar
-          </button>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
-                <tr>
-                  <th class="p-3">Nomor Unit</th>
-                  <th class="p-3">Lantai</th>
-                  <th class="p-3">Tipe</th>
-                  <th class="p-3">Tarif Pokok</th>
-                  <th class="p-3">Fasilitas</th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3 text-right">ID Kamar</th>
-                </tr>
-              </thead>
-              <tbody id="unitMasterTableBody" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== VIEW 3: /penghuni ==================== -->
-      <div id="view-penghuni" class="hidden space-y-4">
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900">Direktori Penyewa Aktif</h3>
-            <p class="text-xs text-slate-500">Database identitas, kontak darurat, uang jaminan sewa (deposit), dan berkas KTP</p>
-          </div>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
-                <tr>
-                  <th class="p-3">Nama Lengkap</th>
-                  <th class="p-3">Kontak WhatsApp</th>
-                  <th class="p-3">Tgl Masuk</th>
-                  <th class="p-3">Uang Deposit</th>
-                  <th class="p-3">Dokumen KTP</th>
-                  <th class="p-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody id="tenantMasterTableBody" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== VIEW 4: /tagihan ==================== -->
-      <div id="view-tagihan" class="hidden space-y-4">
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900">Riwayat Tagihan & Utilitas</h3>
-            <p class="text-xs text-slate-500">Daftar penagihan sewa, stand meteran listrik, dan status pelunasan</p>
-          </div>
-          <button onclick="openQuickBillingModal()" class="px-3.5 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20">
-            + Terbitkan Tagihan Baru
-          </button>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
-                <tr>
-                  <th class="p-3">No. Invoice</th>
-                  <th class="p-3">Unit / Kamar</th>
-                  <th class="p-3">Periode</th>
-                  <th class="p-3">Jatuh Tempo</th>
-                  <th class="p-3">Total Biaya</th>
-                  <th class="p-3">Status Bayar</th>
-                  <th class="p-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="invoiceMasterTableBody" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== VIEW 5: /buku-kas ==================== -->
-      <div id="view-buku-kas" class="hidden space-y-4">
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-          <div>
-            <h3 class="font-extrabold text-base text-slate-900">Buku Kas & Pengeluaran Operasional</h3>
-            <p class="text-xs text-slate-500">Mutasi kas operasional, perbaikan fasilitas, iuran sampah, dan kebersihan</p>
-          </div>
-          <button onclick="openExpenseModal()" class="px-3.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20">
-            + Catat Pengeluaran
-          </button>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
-                <tr>
-                  <th class="p-3">Tanggal</th>
-                  <th class="p-3">Kategori</th>
-                  <th class="p-3">Deskripsi Transaksi</th>
-                  <th class="p-3">Petugas</th>
-                  <th class="p-3 text-right">Nominal Pengeluaran</th>
-                </tr>
-              </thead>
-              <tbody id="expenseTableBody" class="divide-y divide-slate-100 font-mono"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== VIEW 6: /kwitansi (STANDALONE PRINT VIEW) ==================== -->
-      <div id="view-kwitansi" class="hidden">
-        <div class="max-w-xl mx-auto border border-slate-300 rounded-2xl p-6 shadow-sm bg-white printable-receipt">
-          <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
             <div>
-              <h2 class="text-xl font-extrabold text-slate-900" id="rcptPropName">GRAHA MELATI BATAM</h2>
-              <p class="text-xs text-slate-500">Kwitansi Resmi Pembayaran Sewa</p>
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-brand-600">PRO</span>
+                <span class="text-[10px] font-bold bg-indigo-50 text-brand-700 px-2.5 py-1 rounded-lg">6 - 25
+                  Kamar</span>
+              </div>
+              <div class="mt-4">
+                <span class="text-3xl md:text-4xl font-black font-mono text-slate-900">Rp 99.000</span>
+                <span class="text-xs text-slate-400 font-semibold">/ bulan</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Pilihan optimal untuk kost karyawan, mahasiswa, & operasional
+                harian aktif.</p>
+              <ul class="mt-6 space-y-2.5 text-xs text-slate-700 font-medium">
+                <li class="flex items-center gap-2"><span>✅</span> Kapasitas 6 - 25 Pintu Kamar</li>
+                <li class="flex items-center gap-2"><span>✅</span> <b>2 Akun Staf Lapangan Terpisah</b></li>
+                <li class="flex items-center gap-2"><span>✅</span> Hitung Meteran Listrik kWh & Air</li>
+                <li class="flex items-center gap-2"><span>✅</span> Rekap Kas & Laba Rugi Otomatis</li>
+                <li class="flex items-center gap-2"><span>✅</span> WhatsApp Priority Support 7x24 Jam</li>
+              </ul>
             </div>
-            <div class="px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-700 font-extrabold text-xs rounded-lg uppercase tracking-widest">
-              LUNAS / PAID
-            </div>
+            <button onclick="openRegisterModal('PRO')"
+              class="w-full mt-8 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-brand-600/30 transition-all">
+              Pilih Paket Pro (Paling Laris)
+            </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-            <div><span class="text-slate-400">Nomor Invoice:</span> <b id="rcptInvId" class="font-mono text-slate-800">INV-000</b></div>
-            <div><span class="text-slate-400">Tanggal Bayar:</span> <b id="rcptPaidDate" class="font-mono text-slate-800">-</b></div>
-            <div><span class="text-slate-400">Penyewa:</span> <b id="rcptTenantName" class="text-slate-800">-</b></div>
-            <div><span class="text-slate-400">Kamar:</span> <b id="rcptUnitNumber" class="text-slate-800">-</b></div>
-          </div>
-
-          <table class="w-full text-xs text-left mb-4 border-t border-b border-slate-200 py-2">
-            <tbody class="divide-y divide-slate-100" id="rcptTableItems"></tbody>
-          </table>
-
-          <div class="flex justify-between items-center text-sm font-extrabold border-b border-slate-200 pb-4 mb-4">
-            <span>TOTAL PELUNASAN</span>
-            <span class="font-mono text-base text-brand-600" id="rcptTotalPaid">Rp 0</span>
-          </div>
-
-          <div class="text-[11px] text-slate-400 flex justify-between items-end">
+          <!-- Card Enterprise -->
+          <div
+            class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <p>Terima kasih atas pembayaran tepat waktu Anda.</p>
-              <p class="font-mono mt-1">Dicetak otomatis via KostHub OS</p>
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Enterprise</span>
+                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">Tanpa
+                  Batas</span>
+              </div>
+              <div class="mt-4">
+                <span class="text-3xl md:text-4xl font-black font-mono text-slate-900">Rp 199.000</span>
+                <span class="text-xs text-slate-400 font-semibold">/ bulan</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Pengelola portofolio multi-cabang, dormitori besar, & guest house.
+              </p>
+              <ul class="mt-6 space-y-2.5 text-xs text-slate-700 font-medium">
+                <li class="flex items-center gap-2"><span>✅</span> <b>Unlimited Kamar & Pintu</b></li>
+                <li class="flex items-center gap-2"><span>✅</span> <b>Unlimited Akun Staf & Supervisor</b></li>
+                <li class="flex items-center gap-2"><span>✅</span> Export Laporan Pajak PDF/Excel</li>
+                <li class="flex items-center gap-2"><span>✅</span> Custom Branding Rekening & Invoice</li>
+                <li class="flex items-center gap-2"><span>✅</span> VIP Dedicated Onboarding Manager</li>
+              </ul>
             </div>
-            <div class="text-right">
-              <p>Pengelola Properti</p>
-              <p class="font-bold text-slate-800 mt-6">( Hendra Wijaya )</p>
-            </div>
-          </div>
-
-          <div class="mt-6 flex gap-2 no-print">
-            <button onclick="window.print()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs">🖨️ Cetak Kwitansi</button>
-            <button onclick="navigateTo('/home')" class="px-4 py-2.5 border border-slate-300 rounded-xl font-bold text-xs">Kembali ke Home</button>
+            <button onclick="openRegisterModal('ENTERPRISE')"
+              class="w-full mt-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors">
+              Pilih Paket Enterprise
+            </button>
           </div>
         </div>
       </div>
+    </section>
 
-    </main>
+    <!-- Footer Publik -->
+    <footer class="mt-auto bg-slate-900 text-slate-400 py-10 px-4 md:px-8 border-t border-slate-800 text-xs">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center font-black text-sm">K
+          </div>
+          <span class="font-extrabold text-white text-sm">KostHub OS</span>
+          <span class="text-slate-600">|</span>
+          <span>Sistem Otomasi Manajemen Properti Terintegrasi</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <span class="flex items-center gap-1.5"><span
+              class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Google Workspace Serverless
+            Engine</span>
+          <span>© 2026 KostHub OS. All Rights Reserved.</span>
+        </div>
+      </div>
+    </footer>
   </div>
 
-  <!-- ==================== MOBILE BOTTOM NAVIGATION ==================== -->
-  <nav id="appBottomNav" class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-40 flex items-center justify-around py-2 px-1 text-[11px] font-bold text-slate-500">
-    <a href="/home" onclick="event.preventDefault(); navigateTo('/home');" id="bnav-home" class="flex flex-col items-center gap-1 text-brand-600">
-      <span class="text-base">📊</span> Home
-    </a>
-    <a href="/kamar-unit" onclick="event.preventDefault(); navigateTo('/kamar-unit');" id="bnav-kamar-unit" class="flex flex-col items-center gap-1">
-      <span class="text-base">🚪</span> Kamar
-    </a>
-    <a href="/penghuni" onclick="event.preventDefault(); navigateTo('/penghuni');" id="bnav-penghuni" class="flex flex-col items-center gap-1">
-      <span class="text-base">👥</span> Penyewa
-    </a>
-    <a href="/tagihan" onclick="event.preventDefault(); navigateTo('/tagihan');" id="bnav-tagihan" class="flex flex-col items-center gap-1">
-      <span class="text-base">📑</span> Tagihan
-    </a>
-    <a href="/buku-kas" onclick="event.preventDefault(); navigateTo('/buku-kas');" id="bnav-buku-kas" class="flex flex-col items-center gap-1">
-      <span class="text-base">💰</span> Kas
-    </a>
-  </nav>
+  <!-- ==================== VIEW 1: LOGIN PORTAL ( /login ) ==================== -->
+  <div id="view-login"
+    class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 p-8 text-center animate-fade-in">
+      <div
+        class="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-extrabold shadow-inner">
+        🏢
+      </div>
+      <h2 class="text-2xl font-extrabold text-slate-900">Masuk ke KostHub OS</h2>
+      <p class="text-xs text-slate-500 mt-1 font-semibold">Multi-Tenant Role-Based Access Control</p>
+
+      <div class="mt-6 text-left space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nomor WhatsApp Aktif</label>
+          <input type="text" id="loginPhoneInput" placeholder="08xxxxxxxxxx"
+            class="w-full text-sm font-mono py-2.5 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Master PIN (6 Digit)</label>
+          <input type="password" id="loginPinInput" maxlength="6" placeholder="* * * * * *"
+            class="w-full text-center tracking-[0.4em] text-xl font-mono py-2.5 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600" />
+        </div>
+        <p id="loginErrorMessage" class="text-red-500 text-xs font-semibold hidden text-center pt-1"></p>
+      </div>
+
+      <button onclick="handleLogin()" id="btnLoginSubmit"
+        class="w-full mt-6 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center gap-2 text-sm">
+        <span>Masuk ke Dashboard</span>
+      </button>
+
+      <div class="mt-5 text-center">
+        <button onclick="navigateTo('/')"
+          class="text-xs font-bold text-slate-500 hover:text-brand-600 transition-colors">
+          ← Kembali ke Halaman Utama
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== AUTHENTICATED WRAPPER ==================== -->
+  <div id="authenticatedAppWrapper" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside id="appSidebar"
+      class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 min-h-screen p-5 shrink-0 justify-between sticky top-0 h-screen">
+      <div>
+        <div class="flex items-center gap-3 px-2 py-3 mb-6 cursor-pointer" onclick="navigateTo('/home')">
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-brand-600/20">
+            K
+          </div>
+          <div>
+            <h1 class="font-extrabold text-base leading-tight tracking-tight text-slate-900">KostHub OS</h1>
+            <p id="sidebarRoleBadge" class="text-[10px] text-brand-600 font-extrabold tracking-widest uppercase">OWNER
+            </p>
+          </div>
+        </div>
+
+        <!-- Links Navigasi Berdasarkan Role -->
+        <nav class="space-y-1 text-xs font-bold" id="sidebarNavLinks">
+          <!-- Dinamis diatur oleh updateSidebarNav() -->
+        </nav>
+      </div>
+
+      <!-- Footer Sidebar Info -->
+      <div class="border-t border-slate-100 pt-4 space-y-3">
+        <div id="sidebarQuotaBox" class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <div class="flex justify-between text-[11px] font-bold text-slate-700">
+            <span>Kapasitas Kamar</span>
+            <span id="sidebarOccupancyText" class="font-mono text-brand-600">0/0</span>
+          </div>
+          <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div id="sidebarOccupancyBar" class="bg-brand-600 h-full rounded-full transition-all duration-500"
+              style="width: 0%"></div>
+          </div>
+        </div>
+        <button onclick="handleLogout()"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+          <span>🚪</span> Keluar Sistem
+        </button>
+      </div>
+    </aside>
+
+    <!-- CONTENT BODY CONTAINER -->
+    <div class="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
+
+      <!-- Top Header Bar -->
+      <header id="appHeader"
+        class="bg-white border-b border-slate-200 px-4 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <div class="flex items-center gap-3">
+          <div
+            class="md:hidden w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-black text-sm"
+            onclick="navigateTo('/home')">
+            K
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="headerPropertyName" class="text-sm md:text-base font-extrabold text-slate-900 leading-tight">Graha
+                Melati Batam</h2>
+              <span id="headerTierBadge"
+                class="text-[10px] bg-indigo-50 text-brand-600 px-2 py-0.5 rounded-full font-extrabold uppercase hidden md:inline">PRO</span>
+            </div>
+            <p class="text-[11px] text-slate-500 hidden md:block">Sinkronisasi Database Google Sheets • Multi-Tenant
+              Active</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button id="btnHeaderCatatKas" onclick="openExpenseModal()"
+            class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+            <span>+</span> Catat Kas
+          </button>
+          <button id="btnHeaderBuatTagihan" onclick="openQuickBillingModal()"
+            class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20 transition-all flex items-center gap-1.5">
+            <span>⚡</span> + Buat Tagihan
+          </button>
+          <div class="flex items-center gap-2 pl-2 border-l border-slate-200 cursor-pointer"
+            onclick="navigateTo('/profil')">
+            <div
+              class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-black text-xs flex items-center justify-center"
+              id="userHeaderAvatar">
+              U
+            </div>
+            <div class="hidden lg:block text-left text-xs">
+              <p class="font-extrabold text-slate-900 leading-tight" id="userHeaderName">User</p>
+              <p class="text-[10px] text-slate-400 font-bold" id="userHeaderRole">Owner</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- DYNAMIC VIEWS -->
+      <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+
+        <!-- ==================== VIEW 2: DASHBOARD OWNER & STAFF (/home) ==================== -->
+        <div id="view-home" class="space-y-6 hidden">
+          <!-- 4 KPI Cards (Disembunyikan jika role STAFF) -->
+          <section id="ownerKpiContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div
+              class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Okupansi</span>
+                <span class="p-2 bg-indigo-50 text-brand-600 rounded-xl text-sm">🛏️</span>
+              </div>
+              <div class="mt-3">
+                <div class="text-2xl md:text-3xl font-extrabold font-mono text-slate-900" id="kpiOccupancy">0/0</div>
+                <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
+                  <span id="kpiOccupancyPercent">0% Terisi</span>
+                  <span class="text-emerald-600 font-bold">+5% bln lalu</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Omzet Bulan Ini</span>
+                <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-sm">💵</span>
+              </div>
+              <div class="mt-3">
+                <div class="text-xl md:text-2xl font-extrabold font-mono text-slate-900" id="kpiIncome">Rp 0</div>
+                <div class="flex items-center justify-between text-xs text-slate-500 mt-1">
+                  <span>Penerimaan Sewa</span>
+                  <span class="text-emerald-600 font-bold">Terkumpul</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Total Tunggakan</span>
+                <span class="p-2 bg-red-50 text-red-600 rounded-xl text-sm">⚠️</span>
+              </div>
+              <div class="mt-3">
+                <div class="text-xl md:text-2xl font-extrabold font-mono text-red-600" id="kpiOverdue">Rp 0</div>
+                <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                  <span class="text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-full" id="kpiOverdueCount">0 Kamar
+                    Menunggak</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kas Bersih (Net)</span>
+                <span class="p-2 bg-blue-50 text-blue-600 rounded-xl text-sm">👛</span>
+              </div>
+              <div class="mt-3">
+                <div class="text-xl md:text-2xl font-extrabold font-mono text-brand-600" id="kpiNetCash">Rp 0</div>
+                <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                  <span>Pemasukan - Beban</span>
+                  <span class="text-emerald-600 font-bold">Surplus</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Banner Staf Operasional (Hanya tampil jika role STAFF) -->
+          <div id="staffInstructionBanner"
+            class="hidden bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">👷‍♂️</span>
+              <div>
+                <h4 class="font-extrabold text-sm text-brand-900">Portal Petugas Lapangan</h4>
+                <p class="text-xs text-brand-700">Tugas Anda: Catat angka stand meteran listrik/air dan perbarui status
+                  kebersihan kamar siap huni.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Room Matrix Section -->
+          <section class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base md:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>🔲</span> Matriks Okupansi & Status Kamar
+                </h3>
+                <p class="text-xs text-slate-500">Audit unit hunian dan penagihan satu sentuhan</p>
+              </div>
+              <div class="relative w-full md:w-64">
+                <input type="text" id="searchRoomInput" oninput="filterRooms()"
+                  placeholder="Cari nomor kamar / penyewa..."
+                  class="w-full text-xs py-2 pl-8 pr-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-600" />
+                <span class="absolute left-2.5 top-2.5 text-xs text-slate-400">🔍</span>
+              </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold no-scrollbar">
+              <button onclick="setRoomFilter('ALL')" id="filter-pill-ALL"
+                class="px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors">Semua (<span
+                  id="count-all">0</span>)</button>
+              <button onclick="setRoomFilter('OCCUPIED')" id="filter-pill-OCCUPIED"
+                class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Terisi
+                (<span id="count-occupied">0</span>)</button>
+              <button onclick="setRoomFilter('OVERDUE')" id="filter-pill-OVERDUE"
+                class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Menunggak
+                (<span id="count-overdue">0</span>)</button>
+              <button onclick="setRoomFilter('VACANT')" id="filter-pill-VACANT"
+                class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors">Kosong
+                (<span id="count-vacant">0</span>)</button>
+            </div>
+
+            <!-- Cards Container -->
+            <div id="roomMatrixGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2"></div>
+          </section>
+        </div>
+
+        <!-- ==================== VIEW 3: KAMAR & UNIT (/kamar-unit) ==================== -->
+        <div id="view-kamar-unit" class="hidden space-y-4">
+          <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Master Data Kamar & Unit</h3>
+              <p class="text-xs text-slate-500">Kelola nomor unit, tipe, harga dasar, dan stand meteran awal</p>
+            </div>
+            <button onclick="openAddUnitModal()"
+              class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20">
+              + Tambah Kamar
+            </button>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
+                  <tr>
+                    <th class="p-3">Nomor Unit</th>
+                    <th class="p-3">Lantai</th>
+                    <th class="p-3">Tipe</th>
+                    <th class="p-3">Tarif Pokok</th>
+                    <th class="p-3">Fasilitas</th>
+                    <th class="p-3">Stand Meter</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="unitMasterTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 4: PENGHUNI (/penghuni) ==================== -->
+        <div id="view-penghuni" class="hidden space-y-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Direktori Penghuni Aktif</h3>
+              <p class="text-xs text-slate-500">Database identitas, kontak WhatsApp, tanggal masuk, dan jaminan deposit
+              </p>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
+                  <tr>
+                    <th class="p-3">Nama Lengkap</th>
+                    <th class="p-3">Kontak WhatsApp</th>
+                    <th class="p-3">Tgl Masuk</th>
+                    <th class="p-3">Uang Deposit</th>
+                    <th class="p-3">Dokumen KTP</th>
+                    <th class="p-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantMasterTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 5: TAGIHAN BULANAN (/tagihan) ==================== -->
+        <div id="view-tagihan" class="hidden space-y-4">
+          <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Riwayat Penagihan & Utilitas</h3>
+              <p class="text-xs text-slate-500">Arsip seluruh invoice sewa, perhitungan listrik, dan verifikasi
+                pelunasan</p>
+            </div>
+            <button onclick="openQuickBillingModal()"
+              class="px-3.5 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-600/20">
+              + Buat Tagihan Baru
+            </button>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
+                  <tr>
+                    <th class="p-3">No. Invoice</th>
+                    <th class="p-3">Unit Kamar</th>
+                    <th class="p-3">Periode</th>
+                    <th class="p-3">Jatuh Tempo</th>
+                    <th class="p-3">Total Bersih</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceMasterTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 6: BUKU KAS (/buku-kas) ==================== -->
+        <div id="view-buku-kas" class="hidden space-y-4">
+          <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Buku Kas & Pengeluaran Operasional</h3>
+              <p class="text-xs text-slate-500">Mutasi kas operasional, listrik induk, iuran sampah, dan kebersihan</p>
+            </div>
+            <button onclick="openExpenseModal()"
+              class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20">
+              + Catat Pengeluaran
+            </button>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
+                  <tr>
+                    <th class="p-3">Tanggal</th>
+                    <th class="p-3">Kategori</th>
+                    <th class="p-3">Keterangan Biaya</th>
+                    <th class="p-3">Petugas</th>
+                    <th class="p-3 text-right">Nominal (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseTableBody" class="divide-y divide-slate-100 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 7: KELOLA AKUN STAF (/kelola-staff) ==================== -->
+        <div id="view-kelola-staff" class="hidden space-y-6">
+          <div
+            class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 md:p-6 rounded-2xl border border-slate-200 gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-extrabold text-lg text-slate-900">Manajemen Akses & Akun Staf Lapangan</h3>
+                <span id="staffQuotaBadge"
+                  class="text-[10px] bg-indigo-50 text-brand-700 px-2.5 py-1 rounded-full font-extrabold">Kuota:
+                  0/2</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Delegasikan tugas input meteran & cek kamar tanpa membuka data
+                omzet finansial.</p>
+            </div>
+            <button onclick="openAddStaffModal()"
+              class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-600/20 flex items-center gap-2">
+              <span>+</span> Tambah Akun Staf
+            </button>
+          </div>
+
+          <!-- Callout Keamanan Finansial -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
+            <span class="p-2.5 bg-brand-50 text-brand-600 rounded-xl text-base">🛡️</span>
+            <div>
+              <h4 class="font-extrabold text-xs text-slate-900">Isolasi Privasi & Keamanan Finansial Terjamin (Owner
+                Only Protection)</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                Akun staf lapangan hanya dapat menginput angka meteran utilitas dan melihat ketersediaan kamar. Staf
+                <b>TIDAK DAPAT</b> melihat total omzet, saldo kas, riwayat pembayaran, maupun rekening bank properti.
+              </p>
+            </div>
+          </div>
+
+          <!-- Daftar Kartu Staf -->
+          <div id="staffCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- ==================== VIEW 8: PENGATURAN PROFIL & REKENING (/profil) ==================== -->
+        <div id="view-profil" class="hidden space-y-6 max-w-4xl mx-auto">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-6">
+            <div class="border-b border-slate-100 pb-4">
+              <h3 class="font-extrabold text-lg text-slate-900">Pengaturan Akun & Rekening Pembayaran</h3>
+              <p class="text-xs text-slate-500">Kelola identitas pribadi, nomor WhatsApp penagihan, rekening bank sewa,
+                dan keamanan PIN.</p>
+            </div>
+
+            <!-- Bagian 1: Data Diri -->
+            <div class="space-y-4">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-brand-600">Bagian 01 — Profil Pengguna &
+                WhatsApp</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                  <input type="text" id="profNameInput"
+                    class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Resmi Penagihan</label>
+                  <input type="text" id="profPhoneInput"
+                    class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-semibold" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Bagian 2: Khusus Owner (Rekening Bank) -->
+            <div id="ownerBankSettingsSection" class="space-y-4 pt-4 border-t border-slate-100">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-brand-600">Bagian 02 — Rekening Bank
+                Pembayaran Sewa</h4>
+              <div class="bg-brand-50/50 p-3.5 rounded-xl border border-brand-100 text-xs text-brand-900">
+                ℹ️ Rincian rekening di bawah ini otomatis dicantumkan pada template pesan invoice WhatsApp yang
+                dikirimkan ke nomor penyewa.
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nama Usaha Kost / Properti</label>
+                  <input type="text" id="profPropertyNameInput"
+                    class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Informasi Rekening Bank Tujuan</label>
+                  <input type="text" id="profBankInfoInput" placeholder="Contoh: BCA 1234567890 a.n Ratna Dewi"
+                    class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Bagian 3: Ganti PIN Keamanan -->
+            <div class="space-y-4 pt-4 border-t border-slate-100">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-brand-600">Bagian 03 — Keamanan & Ganti
+                PIN Akses</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">PIN Baru (6 Digit Angka - Opsional)</label>
+                  <input type="password" id="profNewPinInput" maxlength="6"
+                    placeholder="Biarkan kosong jika tidak diubah"
+                    class="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-center tracking-[0.3em]" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">PIN Lama (Wajib untuk Konfirmasi) *</label>
+                  <input type="password" id="profOldPinInput" maxlength="6" placeholder="Masukkan PIN lama Anda"
+                    class="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-center tracking-[0.3em] bg-yellow-50/40" />
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end">
+              <button onclick="submitUpdateProfile()" id="btnSubmitProfile"
+                class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-brand-600/30 transition-all">
+                💾 Simpan Perubahan Profil
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 9: SUPER ADMIN CONSOLE (/super-admin) ==================== -->
+        <div id="view-super-admin" class="hidden space-y-6">
+          <div
+            class="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <span
+                class="text-[10px] font-black uppercase tracking-widest text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">Root
+                Control Plane</span>
+              <h3 class="font-black text-xl text-slate-900 mt-1">KostHub Super Admin License & Tenant Control</h3>
+              <p class="text-xs text-slate-500">Monitoring seluruh properti klien, aktivasi kuota kamar, dan manajemen
+                lisensi SaaS.</p>
+            </div>
+          </div>
+
+          <!-- KPI Super Admin -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <span class="text-xs font-bold text-slate-400 uppercase">Total Owner Aktif</span>
+              <p class="text-2xl font-black font-mono text-slate-900 mt-1" id="admTotalOwners">0 Properti</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <span class="text-xs font-bold text-slate-400 uppercase">Total Kamar Terhubung</span>
+              <p class="text-2xl font-black font-mono text-brand-600 mt-1" id="admTotalUnits">0 Unit</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <span class="text-xs font-bold text-slate-400 uppercase">Estimasi MRR SaaS</span>
+              <p class="text-2xl font-black font-mono text-emerald-600 mt-1" id="admTotalMrr">Rp 0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <span class="text-xs font-bold text-slate-400 uppercase">Paket Terpopuler</span>
+              <p class="text-2xl font-black text-indigo-600 mt-1" id="admTopTier">PRO</p>
+            </div>
+          </div>
+
+          <!-- Tabel Tata Kelola Tenant -->
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden space-y-3 p-4">
+            <h4 class="font-extrabold text-sm text-slate-900">Daftar Tenant & Lisensi Properti</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase">
+                  <tr>
+                    <th class="p-3">ID Owner</th>
+                    <th class="p-3">Nama Properti</th>
+                    <th class="p-3">Owner / WhatsApp</th>
+                    <th class="p-3">Paket</th>
+                    <th class="p-3">Kamar / Kuota</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3 text-right">Aksi Kelola</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTenantTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VIEW 10: KWITANSI DIGITAL (/kwitansi) ==================== -->
+        <div id="view-kwitansi" class="hidden">
+          <div class="max-w-xl mx-auto border border-slate-300 rounded-2xl p-6 shadow-sm bg-white printable-receipt">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
+              <div>
+                <h2 class="text-xl font-extrabold text-slate-900" id="rcptPropName">GRAHA MELATI BATAM</h2>
+                <p class="text-xs text-slate-500">Kwitansi Resmi Pembayaran Sewa</p>
+              </div>
+              <div
+                class="px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-700 font-extrabold text-xs rounded-lg uppercase tracking-widest">
+                LUNAS / PAID
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+              <div><span class="text-slate-400">Nomor Invoice:</span> <b id="rcptInvId"
+                  class="font-mono text-slate-800">-</b></div>
+              <div><span class="text-slate-400">Tanggal Bayar:</span> <b id="rcptPaidDate"
+                  class="font-mono text-slate-800">-</b></div>
+              <div><span class="text-slate-400">Penyewa:</span> <b id="rcptTenantName" class="text-slate-800">-</b>
+              </div>
+              <div><span class="text-slate-400">Kamar:</span> <b id="rcptUnitNumber" class="text-slate-800">-</b></div>
+            </div>
+
+            <table class="w-full text-xs text-left mb-4 border-t border-b border-slate-200 py-2">
+              <tbody class="divide-y divide-slate-100" id="rcptTableItems"></tbody>
+            </table>
+
+            <div class="flex justify-between items-center text-sm font-extrabold border-b border-slate-200 pb-4 mb-4">
+              <span>TOTAL PELUNASAN</span>
+              <span class="font-mono text-base text-brand-600" id="rcptTotalPaid">Rp 0</span>
+            </div>
+
+            <div class="text-[11px] text-slate-400 flex justify-between items-end">
+              <div>
+                <p>Terima kasih atas pembayaran tepat waktu Anda.</p>
+                <p class="font-mono mt-1">Dicetak otomatis via KostHub OS</p>
+              </div>
+              <div class="text-right">
+                <p>Pengelola Properti</p>
+                <p class="font-bold text-slate-800 mt-6" id="rcptOwnerSign">( Pengelola )</p>
+              </div>
+            </div>
+
+            <div class="mt-6 flex gap-2 no-print">
+              <button onclick="window.print()"
+                class="flex-1 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs">🖨️ Cetak Kwitansi</button>
+              <button onclick="navigateTo('/home')"
+                class="px-4 py-2.5 border border-slate-300 rounded-xl font-bold text-xs">Kembali</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav id="appBottomNav"
+      class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-40 flex items-center justify-around py-2 px-1 text-[11px] font-bold text-slate-500">
+      <!-- Dinamis diatur oleh updateSidebarNav() -->
+    </nav>
+  </div>
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- Modal: Buat Tagihan -->
-  <div id="modalBilling" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+  <!-- Modal: Registrasi Calon Owner Baru -->
+  <div id="modalRegister"
+    class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-brand-600 uppercase bg-indigo-50 px-2 py-0.5 rounded">Aktivasi Instan
+            14 Hari</span>
+          <h3 class="font-black text-base text-slate-900 mt-0.5">Registrasi Mandiri Pemilik Kost</h3>
+        </div>
+        <button onclick="closeModal('modalRegister')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Paket Berlangganan Pilihan</label>
+          <select id="regTierInput" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-700">
+            <option value="STARTER">Paket Starter (Maks 5 Kamar) — Rp 49.000/bln</option>
+            <option value="PRO" selected>Paket Pro (Maks 25 Kamar + 2 Staf) — Rp 99.000/bln</option>
+            <option value="ENTERPRISE">Paket Enterprise (Unlimited) — Rp 199.000/bln</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Owner *</label>
+            <input type="text" id="regNameInput" placeholder="Contoh: Hendra Wijaya"
+              class="w-full p-2.5 rounded-xl border border-slate-300 font-semibold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Aktif *</label>
+            <input type="text" id="regPhoneInput" placeholder="08xxxxxxxxxx"
+              class="w-full p-2.5 rounded-xl border border-slate-300 font-mono font-semibold" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Usaha Kost / Properti *</label>
+            <input type="text" id="regPropertyNameInput" placeholder="Contoh: Graha Melati Batam"
+              class="w-full p-2.5 rounded-xl border border-slate-300 font-semibold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kota / Lokasi</label>
+            <input type="text" id="regCityInput" placeholder="Batam Center"
+              class="w-full p-2.5 rounded-xl border border-slate-300 font-semibold" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Master PIN 6 Digit (Akses Login) *</label>
+          <input type="password" id="regPinInput" maxlength="6" placeholder="* * * * * *"
+            class="w-full text-center tracking-[0.4em] p-2.5 rounded-xl border border-slate-300 font-mono text-base" />
+        </div>
+        <p id="regErrorText" class="text-red-500 font-bold text-[11px] hidden text-center"></p>
+      </div>
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeModal('modalRegister')"
+          class="px-4 py-2.5 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitRegisterOwner()" id="btnSubmitRegister"
+          class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl shadow-md shadow-brand-600/30">
+          🚀 Daftarkan & Aktifkan Akun
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Staf Lapangan -->
+  <div id="modalAddStaff"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-extrabold text-sm text-slate-900">Tambah Akun Staf Lapangan</h3>
+        <button onclick="closeModal('modalAddStaff')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
+      <div class="p-5 space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Staf *</label>
+          <input type="text" id="staffNameInput" placeholder="Contoh: Ahmad Fauzi"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Staf *</label>
+          <input type="text" id="staffPhoneInput" placeholder="08xxxxxxxxxx"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-semibold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">PIN Akses Staf (6 Digit) *</label>
+          <input type="password" id="staffPinInput" maxlength="6" placeholder="* * * * * *"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-center tracking-[0.3em]" />
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeModal('modalAddStaff')"
+          class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitAddStaff()" id="btnSubmitStaff"
+          class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md">
+          Simpan Akun Staf
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Buat Tagihan Bulanan -->
+  <div id="modalBilling"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
       <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div>
           <h3 class="font-extrabold text-sm text-slate-900" id="billingModalTitle">Buat Tagihan Sewa</h3>
           <p class="text-[11px] text-slate-500" id="billingModalSubtitle">Perhitungan sewa dan meteran listrik</p>
         </div>
-        <button onclick="closeModal('modalBilling')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <button onclick="closeModal('modalBilling')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       </div>
       <div class="p-5 overflow-y-auto space-y-4 text-xs">
         <input type="hidden" id="billingUnitId" />
@@ -469,16 +1000,19 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Periode Tagihan</label>
-            <input type="text" id="billingPeriod" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" value="Oktober 2026" />
+            <input type="text" id="billingPeriod" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold"
+              value="Oktober 2026" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Jatuh Tempo</label>
-            <input type="date" id="billingDueDate" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+            <input type="date" id="billingDueDate"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
           </div>
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Harga Sewa Kamar Pokok (Rp)</label>
-          <input type="number" id="billingBasePrice" oninput="calculateBillingTotal()" class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900" />
+          <input type="number" id="billingBasePrice" oninput="calculateBillingTotal()"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900" />
         </div>
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
           <div class="flex justify-between items-center">
@@ -488,11 +1022,13 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <span class="text-[10px] text-slate-500">Stand Lalu (kWh)</span>
-              <input type="number" id="billingLastMeter" disabled class="w-full p-2 rounded-lg bg-slate-200/70 border border-slate-300 font-mono font-bold text-slate-600" />
+              <input type="number" id="billingLastMeter" disabled
+                class="w-full p-2 rounded-lg bg-slate-200/70 border border-slate-300 font-mono font-bold text-slate-600" />
             </div>
             <div>
               <span class="text-[10px] text-slate-500">Stand Baru (kWh)</span>
-              <input type="number" id="billingNewMeter" oninput="calculateBillingTotal()" class="w-full p-2 rounded-lg bg-white border border-slate-300 font-mono font-bold text-brand-600 focus:ring-2 focus:ring-brand-600" />
+              <input type="number" id="billingNewMeter" oninput="calculateBillingTotal()"
+                class="w-full p-2 rounded-lg bg-white border border-slate-300 font-mono font-bold text-brand-600 focus:ring-2 focus:ring-brand-600" />
             </div>
           </div>
           <div class="flex justify-between items-center text-[11px] pt-1 text-slate-600">
@@ -503,11 +1039,13 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Iuran Sampah & Air (Rp)</label>
-            <input type="number" id="billingAdditionalFee" oninput="calculateBillingTotal()" value="20000" class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold" />
+            <input type="number" id="billingAdditionalFee" oninput="calculateBillingTotal()" value="20000"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Potongan / Diskon (Rp)</label>
-            <input type="number" id="billingDiscount" oninput="calculateBillingTotal()" value="0" class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-emerald-600" />
+            <input type="number" id="billingDiscount" oninput="calculateBillingTotal()" value="0"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-emerald-600" />
           </div>
         </div>
         <div class="p-4 bg-brand-50 rounded-xl border border-brand-100 flex items-center justify-between">
@@ -516,8 +1054,10 @@
         </div>
       </div>
       <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button onclick="closeModal('modalBilling')" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
-        <button onclick="submitBillingInvoice()" id="btnSubmitBilling" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md shadow-brand-600/20 flex items-center gap-1.5">
+        <button onclick="closeModal('modalBilling')"
+          class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitBillingInvoice()" id="btnSubmitBilling"
+          class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md shadow-brand-600/20 flex items-center gap-1.5">
           <span>💾 Terbitkan & Siapkan WA</span>
         </button>
       </div>
@@ -525,21 +1065,27 @@
   </div>
 
   <!-- Modal: WhatsApp Preview -->
-  <div id="modalWhatsApp" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+  <div id="modalWhatsApp"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 text-center space-y-4">
-      <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
+      <div
+        class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
         💬
       </div>
       <div>
         <h3 class="font-extrabold text-base text-slate-900">Tagihan Berhasil Diterbitkan!</h3>
         <p class="text-xs text-slate-500">Data tersimpan di Google Sheets dan siap dikirim via WhatsApp</p>
       </div>
-      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs font-mono whitespace-pre-line text-slate-700 max-h-48 overflow-y-auto leading-relaxed" id="waMessagePreview"></div>
+      <div
+        class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs font-mono whitespace-pre-line text-slate-700 max-h-48 overflow-y-auto leading-relaxed"
+        id="waMessagePreview"></div>
       <div class="flex flex-col gap-2 pt-2">
-        <button onclick="dispatchWhatsAppUrl()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+        <button onclick="dispatchWhatsAppUrl()"
+          class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
           <span>🚀 Buka Chat WhatsApp Sekarang</span>
         </button>
-        <button onclick="closeModal('modalWhatsApp')" class="w-full py-2.5 text-slate-500 font-bold hover:bg-slate-100 rounded-xl">
+        <button onclick="closeModal('modalWhatsApp')"
+          class="w-full py-2.5 text-slate-500 font-bold hover:bg-slate-100 rounded-xl">
           Tutup
         </button>
       </div>
@@ -547,94 +1093,114 @@
   </div>
 
   <!-- Modal: Tambah Unit Kamar -->
-  <div id="modalAddUnit" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+  <div id="modalAddUnit"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
       <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <h3 class="font-extrabold text-sm text-slate-900">Tambah Unit Kamar Baru</h3>
-        <button onclick="closeModal('modalAddUnit')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <button onclick="closeModal('modalAddUnit')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       </div>
       <div class="p-5 space-y-3.5 text-xs">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nomor / Nama Kamar *</label>
-          <input type="text" id="unitNumberInput" placeholder="Contoh: Kamar 105" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+          <input type="text" id="unitNumberInput" placeholder="Contoh: Kamar 105"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Lantai</label>
-            <input type="number" id="unitFloorInput" value="1" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <input type="number" id="unitFloorInput" value="1"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tipe Kamar</label>
-            <input type="text" id="unitTypeInput" placeholder="Standard AC" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+            <input type="text" id="unitTypeInput" placeholder="Standard AC"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Harga Sewa / Bln (Rp) *</label>
-            <input type="number" id="unitPriceInput" placeholder="1500000" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <label class="block font-bold text-slate-700 mb-1">Tarif Pokok / Bln (Rp) *</label>
+            <input type="number" id="unitPriceInput" placeholder="1500000"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Stand Meteran Awal</label>
-            <input type="number" id="unitMeterInput" value="0" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <label class="block font-bold text-slate-700 mb-1">Stand Meter Awal</label>
+            <input type="number" id="unitMeterInput" value="0"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
         </div>
       </div>
       <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button onclick="closeModal('modalAddUnit')" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
-        <button onclick="submitAddUnit()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md">
+        <button onclick="closeModal('modalAddUnit')"
+          class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitAddUnit()"
+          class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md">
           Simpan Kamar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Registrasi Penghuni Baru -->
-  <div id="modalOnboard" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+  <!-- Modal: Registrasi Penghuni Tamu -->
+  <div id="modalOnboard"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
       <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div>
           <h3 class="font-extrabold text-sm text-slate-900" id="onboardRoomTitle">Registrasi Tamu Baru</h3>
           <p class="text-[11px] text-slate-500">Assign tamu ke unit kamar</p>
         </div>
-        <button onclick="closeModal('modalOnboard')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <button onclick="closeModal('modalOnboard')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       </div>
       <div class="p-5 overflow-y-auto space-y-3.5 text-xs">
         <input type="hidden" id="onboardUnitId" />
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Lengkap (Sesuai KTP) *</label>
-          <input type="text" id="onboardName" placeholder="Contoh: Dimas Pratama" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+          <input type="text" id="onboardName" placeholder="Contoh: Dimas Pratama"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Aktif *</label>
-            <input type="text" id="onboardWa" placeholder="0812xxxx / 628xxxx" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <input type="text" id="onboardWa" placeholder="08xxxxxxxxxx"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kontak Darurat</label>
-            <input type="text" id="onboardEmergency" placeholder="08xxxxxxxx" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <input type="text" id="onboardEmergency" placeholder="08xxxxxxxx"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tanggal Mulai Sewa *</label>
-            <input type="date" id="onboardEntryDate" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+            <input type="date" id="onboardEntryDate"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Uang Deposit (Rp)</label>
-            <input type="number" id="onboardDeposit" value="500000" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
+            <input type="number" id="onboardDeposit" value="500000"
+              class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold font-mono" />
           </div>
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Lampiran Foto KTP (Base64 ke Drive)</label>
-          <input type="file" id="onboardKtpFile" accept="image/*" onchange="previewKtpImage(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100" />
+          <label class="block font-bold text-slate-700 mb-1">Lampiran Foto KTP (Base64)</label>
+          <input type="file" id="onboardKtpFile" accept="image/*" onchange="previewKtpImage(event)"
+            class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100" />
           <div id="ktpPreviewContainer" class="mt-2 hidden">
             <img id="ktpImagePreview" src="" class="h-28 rounded-xl border border-slate-200 object-cover" />
           </div>
         </div>
       </div>
       <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button onclick="closeModal('modalOnboard')" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
-        <button onclick="submitOnboardingTenant()" id="btnSubmitOnboard" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md">
+        <button onclick="closeModal('modalOnboard')"
+          class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitOnboardingTenant()" id="btnSubmitOnboard"
+          class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md">
           Simpan & Aktifkan Kamar
         </button>
       </div>
@@ -642,11 +1208,13 @@
   </div>
 
   <!-- Modal: Catat Pengeluaran Kas -->
-  <div id="modalExpense" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
+  <div id="modalExpense"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 md:p-4">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
       <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <h3 class="font-extrabold text-sm text-slate-900">Catat Pengeluaran Kas</h3>
-        <button onclick="closeModal('modalExpense')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <button onclick="closeModal('modalExpense')"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       </div>
       <div class="p-5 space-y-3.5 text-xs">
         <div>
@@ -661,28 +1229,34 @@
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Keterangan Pengeluaran</label>
-          <input type="text" id="expenseDescription" placeholder="Contoh: Beli lampu LED lorong" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
+          <input type="text" id="expenseDescription" placeholder="Contoh: Beli pompa air lorong"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold" />
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nominal Biaya (Rp)</label>
-          <input type="number" id="expenseAmount" placeholder="0" class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900" />
+          <input type="number" id="expenseAmount" placeholder="0"
+            class="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900" />
         </div>
       </div>
       <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button onclick="closeModal('modalExpense')" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
-        <button onclick="submitExpenseRecord()" id="btnSubmitExpense" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">
+        <button onclick="closeModal('modalExpense')"
+          class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-xl">Batal</button>
+        <button onclick="submitExpenseRecord()" id="btnSubmitExpense"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">
           Simpan Transaksi Kas
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Floating Toast -->
-  <div id="toastNotification" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2">
+  <!-- Toast Notifikasi Global -->
+  <div id="toastNotification"
+    class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2">
     <span id="toastIcon">ℹ️</span>
     <span id="toastMessage">Memproses...</span>
   </div>
 
   <script src="/app.js"></script>
 </body>
+
 </html>
