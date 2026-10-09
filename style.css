@@ -1,5 +1,5 @@
 /* =========================================================
-   KostHub OS — Multi-Tenant SaaS Styling Tokens
+   KostHub OS — Multi-Tenant SaaS Styling Tokens (v1.1)
    ========================================================= */
 
 @layer utilities {
@@ -13,7 +13,7 @@
   }
 }
 
-/* Animasi Fade-In Modal & Page */
+/* Animasi Fade-In & Slide */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -28,6 +28,21 @@
 
 .animate-fade-in {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Toast Progress Bar Transition */
+@keyframes toastProgress {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
+}
+
+.toast-progress-active {
+  animation: toastProgress 3s linear forwards;
 }
 
 /* Shimmer Loading Skeleton */

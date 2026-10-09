@@ -1,15 +1,18 @@
 /**
- * KostHub OS — Client-Side Multi-Tenant Core Engine & Router
- * SPA Architecture with HTML5 PushState for Vercel Deployment
+ * =========================================================================
+ * KostHub OS — Client-Side Multi-Tenant Engine & Router (v1.1 Production)
+ * Single Page Application (SPA) Engine for GitHub + Vercel Deployment
+ * =========================================================================
  */
 
 // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyfw7D6YyS-cJt7FT-Tv-so3D6M0JrrMTnSMCF39xak6SNVZtjt0Yo_MLdw-pLS34Z7_w/exec";
 
-// Master Route Table
+// Master Route Table (Clean URL Mapping)
 const ROUTES = {
   "/": "landing",
   "/login": "login",
+  "/pembayaran": "pembayaran",
   "/home": "home",
   "/kamar-unit": "kamar-unit",
   "/penghuni": "penghuni",
@@ -21,9 +24,10 @@ const ROUTES = {
   "/kwitansi": "kwitansi"
 };
 
-// Global Application State
+// Global Reactive Application State
 const state = {
   session: JSON.parse(localStorage.getItem("kosthub_session")) || null,
+  pendingPaymentData: JSON.parse(localStorage.getItem("kosthub_pending_pay")) || null,
   activeFilter: "ALL",
   searchKeyword: "",
   currentRoute: "/",
@@ -37,6 +41,7 @@ const state = {
     netCashflow: 0
   },
   tempKtpBase64: "",
+  tempPayProofBase64: "",
   tempWaUrl: ""
 };
 
@@ -53,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigateTo(initialPath, false);
   }
 
-  // Set default dates
+  // Set default form date values
   const todayStr = new Date().toISOString().split("T")[0];
   const dueDateInput = document.getElementById("billingDueDate");
   const entryDateInput = document.getElementById("onboardEntryDate");
@@ -61,26 +66,33 @@ document.addEventListener("DOMContentLoaded", () => {
   if (entryDateInput) entryDateInput.value = todayStr;
 });
 
-// Browser PopState Listener (Back/Forward Buttons)
+// Browser History Back/Forward PopState Handler
 window.addEventListener("popstate", (event) => {
   const path = (event.state && event.state.path) ? event.state.path : window.location.pathname;
   navigateTo(path, false);
 });
 
-// Router Core Function
+// Central Navigation Router
 function navigateTo(path, pushState = true) {
   const cleanPath = path.split("?")[0];
   const queryStr = path.includes("?") ? `?${path.split("?")[1]}` : "";
 
-  // Auth Guard
-  const publicRoutes = ["/", "/login", "/kwitansi"];
+  // 1. Auth Guard (Public Routes Bypass)
+  const publicRoutes = ["/", "/login", "/pembayaran", "/kwitansi"];
   if (!state.session && !publicRoutes.includes(cleanPath)) {
     navigateTo("/login", true);
     return;
   }
 
-  // Redirect to Dashboard if already logged in and visiting login or landing
-  if (state.session && (cleanPath === "/login" || cleanPath === "/")) {
+  // 2. Paywall Guard (Pendaftar Baru yang belum diverifikasi Super Admin)
+  if (state.session && state.session.status === "PENDING_PAYMENT" && cleanPath !== "/pembayaran" && cleanPath !== "/login") {
+    showToast("Akun Anda menunggu verifikasi pembayaran oleh Admin.", "warning");
+    navigateTo("/pembayaran", true);
+    return;
+  }
+
+  // 3. Authenticated Redirect Bypass
+  if (state.session && state.session.status === "ACTIVE" && (cleanPath === "/login" || cleanPath === "/" || cleanPath === "/pembayaran")) {
     if (state.session.role === "SUPER_ADMIN") {
       navigateTo("/super-admin", true);
     } else {
@@ -89,7 +101,7 @@ function navigateTo(path, pushState = true) {
     return;
   }
 
-  // RBAC Access Guard
+  // 4. RBAC Route Guards
   if (state.session) {
     if (cleanPath === "/super-admin" && state.session.role !== "SUPER_ADMIN") {
       showToast("Akses ditolak: Menu khusus Super Admin", "error");
@@ -97,7 +109,7 @@ function navigateTo(path, pushState = true) {
       return;
     }
     if ((cleanPath === "/kelola-staff" || cleanPath === "/buku-kas") && state.session.role === "STAFF") {
-      showToast("Akses ditolak: Menu dibatasi untuk Owner", "error");
+      showToast("Akses ditolak: Menu ini dibatasi untuk Owner", "error");
       navigateTo("/home", true);
       return;
     }
@@ -113,10 +125,13 @@ function navigateTo(path, pushState = true) {
   renderView(targetView);
 }
 
-// Render Selected DOM View
+// View Controller & DOM Switcher
 function renderView(viewId) {
-  // Sembunyikan semua views
-  const allViews = ["landing", "login", "home", "kamar-unit", "penghuni", "tagihan", "buku-kas", "kelola-staff", "profil", "super-admin", "kwitansi"];
+  const allViews = [
+    "landing", "login", "pembayaran", "home", "kamar-unit",
+    "penghuni", "tagihan", "buku-kas", "kelola-staff",
+    "profil", "super-admin", "kwitansi"
+  ];
   allViews.forEach(v => {
     const el = document.getElementById(`view-${v}`);
     if (el) el.classList.add("hidden");
@@ -124,10 +139,14 @@ function renderView(viewId) {
 
   const authWrapper = document.getElementById("authenticatedAppWrapper");
 
-  if (viewId === "landing" || viewId === "login" || viewId === "kwitansi") {
+  if (viewId === "landing" || viewId === "login" || viewId === "pembayaran" || viewId === "kwitansi") {
     if (authWrapper) authWrapper.classList.add("hidden");
     const activeEl = document.getElementById(`view-${viewId}`);
     if (activeEl) activeEl.classList.remove("hidden");
+
+    if (viewId === "pembayaran") {
+      loadPaymentPageView();
+    }
   } else {
     if (authWrapper) authWrapper.classList.remove("hidden");
     const activeEl = document.getElementById(`view-${viewId}`);
@@ -136,7 +155,7 @@ function renderView(viewId) {
     updateHeaderUI();
   }
 
-  // Trigger Data Fetching Per Route
+  // Trigger Asynchronous Data Fetching Per View
   if (viewId === "home") {
     fetchDashboardData();
   } else if (["kamar-unit", "penghuni", "tagihan", "buku-kas"].includes(viewId)) {
@@ -150,7 +169,7 @@ function renderView(viewId) {
   }
 }
 
-// ==================== NAVIGATION & RBAC UI ====================
+// ==================== NAVIGATION & RBAC DYNAMIC UI ====================
 function updateSidebarNav(activePath) {
   const navContainer = document.getElementById("sidebarNavLinks");
   const bottomNav = document.getElementById("appBottomNav");
@@ -184,7 +203,7 @@ function updateSidebarNav(activePath) {
     ];
   }
 
-  // Render Desktop Sidebar
+  // Render Desktop Sidebar Links
   navContainer.innerHTML = links.map(link => `
     <a href="${link.path}" onclick="event.preventDefault(); navigateTo('${link.path}');" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors ${activePath === link.path ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
       <span>${link.icon}</span> ${link.label}
@@ -200,7 +219,6 @@ function updateSidebarNav(activePath) {
     `).join("");
   }
 
-  // Update Role Badges
   document.getElementById("sidebarRoleBadge").innerText = role;
 }
 
@@ -213,7 +231,6 @@ function updateHeaderUI() {
   document.getElementById("userHeaderRole").innerText = s.role;
   document.getElementById("userHeaderAvatar").innerText = (s.name || "U")[0].toUpperCase();
 
-  // Sembunyikan tombol finansial jika role STAFF
   const btnKas = document.getElementById("btnHeaderCatatKas");
   const btnTagih = document.getElementById("btnHeaderBuatTagihan");
   const kpiBox = document.getElementById("ownerKpiContainer");
@@ -232,7 +249,7 @@ function updateHeaderUI() {
   }
 }
 
-// ==================== AUTHENTICATION & API ====================
+// ==================== API CLIENT GATEWAY ====================
 async function callApi(action, payload = {}) {
   const token = state.session ? state.session.token : null;
   const ownerId = state.session ? state.session.owner_id : null;
@@ -251,10 +268,11 @@ async function callApi(action, payload = {}) {
     body: requestBody
   });
 
-  if (!response.ok) throw new Error("Jaringan bermasalah (Status " + response.status + ")");
+  if (!response.ok) throw new Error("Jaringan bermasalah (Status HTTP " + response.status + ")");
   return await response.json();
 }
 
+// ==================== AUTHENTICATION & LOGIN ====================
 async function handleLogin() {
   const phone = document.getElementById("loginPhoneInput").value.trim();
   const pin = document.getElementById("loginPinInput").value.trim();
@@ -262,7 +280,7 @@ async function handleLogin() {
   const btn = document.getElementById("btnLoginSubmit");
 
   if (!phone || pin.length < 4) {
-    errorEl.innerText = "Masukkan Nomor WhatsApp dan PIN valid.";
+    errorEl.innerText = "Masukkan Nomor WhatsApp dan PIN minimal 4 angka.";
     errorEl.classList.remove("hidden");
     return;
   }
@@ -275,8 +293,20 @@ async function handleLogin() {
     if (res.status === "success") {
       state.session = res.data;
       localStorage.setItem("kosthub_session", JSON.stringify(res.data));
-      showToast("Selamat datang di KostHub OS!", "success");
 
+      if (res.data.status === "PENDING_PAYMENT") {
+        state.pendingPaymentData = {
+          ownerId: res.data.owner_id,
+          propertyName: res.data.property_name,
+          tier: res.data.tier
+        };
+        localStorage.setItem("kosthub_pending_pay", JSON.stringify(state.pendingPaymentData));
+        showToast("Akun Anda menunggu verifikasi bukti pembayaran.", "warning");
+        navigateTo("/pembayaran");
+        return;
+      }
+
+      showToast("Selamat datang di KostHub OS!", "success");
       if (res.data.role === "SUPER_ADMIN") {
         navigateTo("/super-admin");
       } else {
@@ -297,11 +327,13 @@ async function handleLogin() {
 
 function handleLogout() {
   localStorage.removeItem("kosthub_session");
+  localStorage.removeItem("kosthub_pending_pay");
   state.session = null;
+  state.pendingPaymentData = null;
   navigateTo("/login");
 }
 
-// ==================== SELF-REGISTRATION CALON OWNER ====================
+// ==================== REGISTRASI MANDIRI CALON OWNER ====================
 function openRegisterModal(tier = "PRO") {
   document.getElementById("regTierInput").value = tier;
   document.getElementById("regErrorText").classList.add("hidden");
@@ -337,10 +369,15 @@ async function submitRegisterOwner() {
 
     if (res.status === "success") {
       closeModal("modalRegister");
-      showToast("Pendaftaran sukses! Silakan login.", "success");
-      document.getElementById("loginPhoneInput").value = phone;
-      document.getElementById("loginPinInput").value = pin;
-      navigateTo("/login");
+      state.pendingPaymentData = {
+        ownerId: res.data.ownerId,
+        propertyName: propName,
+        tier: tier
+      };
+      localStorage.setItem("kosthub_pending_pay", JSON.stringify(state.pendingPaymentData));
+
+      showToast("Pendaftaran tersimpan. Silakan upload bukti pembayaran.", "success");
+      navigateTo("/pembayaran");
     } else {
       errorEl.innerText = res.message || "Gagal registrasi.";
       errorEl.classList.remove("hidden");
@@ -350,13 +387,208 @@ async function submitRegisterOwner() {
     errorEl.classList.remove("hidden");
   } finally {
     btn.disabled = false;
-    btn.innerText = "🚀 Daftarkan & Aktifkan Akun";
+    btn.innerText = "Lanjut ke Pembayaran →";
+  }
+}
+
+// ==================== HALAMAN PEMBAYARAN & UPLOAD BUKTI ====================
+function loadPaymentPageView() {
+  const data = state.pendingPaymentData || (state.session ? {
+    ownerId: state.session.owner_id,
+    propertyName: state.session.property_name,
+    tier: state.session.tier
+  } : null);
+
+  if (!data) return;
+
+  const tierPrices = {
+    STARTER: "Rp 49.000",
+    PRO: "Rp 99.000",
+    ENTERPRISE: "Rp 199.000"
+  };
+
+  document.getElementById("payPropName").innerText = data.propertyName || "-";
+  document.getElementById("payTierName").innerText = `${data.tier} (${data.tier === 'STARTER' ? 'Maks 5 Kamar' : data.tier === 'PRO' ? 'Maks 25 Kamar' : 'Unlimited'})`;
+  document.getElementById("payTotalAmount").innerText = tierPrices[data.tier] || "Rp 99.000";
+}
+
+function previewPayProof(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.tempPayProofBase64 = e.target.result;
+    document.getElementById("payProofImg").src = e.target.result;
+    document.getElementById("payProofPreviewBox").classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitPaymentProof() {
+  const data = state.pendingPaymentData || state.session;
+  if (!data || !data.ownerId) {
+    alert("Data sesi pendaftaran tidak ditemukan. Silakan login kembali.");
+    navigateTo("/login");
+    return;
+  }
+
+  if (!state.tempPayProofBase64) {
+    alert("Harap lampirkan foto struk bukti transfer.");
+    return;
+  }
+
+  const btn = document.getElementById("btnSubmitPayment");
+  btn.disabled = true;
+  btn.innerText = "Mengirim Bukti...";
+
+  try {
+    const res = await callApi("submitPaymentProof", {
+      targetOwnerId: data.ownerId,
+      proofBase64: state.tempPayProofBase64
+    });
+
+    if (res.status === "success") {
+      showToast("Bukti transfer berhasil dikirim!", "success");
+      alert("Bukti pembayaran berhasil dikirimkan ke Super Admin. Akun Anda akan aktif setelah diverifikasi.");
+      navigateTo("/login");
+    } else {
+      alert(res.message);
+    }
+  } catch (err) {
+    alert("Gagal kirim bukti: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "🚀 Kirim Bukti Transfer & Ajukan Aktivasi";
+  }
+}
+
+// ==================== SUPER ADMIN CONTROL PLANE ====================
+async function loadSuperAdminData() {
+  try {
+    const res = await callApi("getAdminOverview");
+    if (res.status === "success") {
+      document.getElementById("admTotalOwners").innerText = `${res.data.totalOwners} Properti`;
+      document.getElementById("admPendingCount").innerText = `${res.data.pendingCount || 0} Akun`;
+      document.getElementById("admTotalMrr").innerText = formatRupiah(res.data.mrr);
+      document.getElementById("admTotalUnits").innerText = `${res.data.totalUnits} Unit`;
+
+      // Render Pending Verification Table
+      const pendingTbody = document.getElementById("adminPendingTableBody");
+      const pendingList = res.data.pendingTenants || [];
+      if (pendingList.length === 0) {
+        pendingTbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada antrean pembayaran menunggu verifikasi.</td></tr>`;
+      } else {
+        pendingTbody.innerHTML = pendingList.map(p => `
+          <tr>
+            <td class="p-3 font-mono font-bold text-slate-500">${p.ownerId}</td>
+            <td class="p-3 font-bold text-slate-900">${p.propertyName}</td>
+            <td class="p-3">${p.ownerName} (${p.phone})</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded font-extrabold text-[10px] bg-indigo-50 text-brand-700">${p.tier}</span></td>
+            <td class="p-3">
+              ${p.proofUrl && p.proofUrl.startsWith('http') ? `<a href="${p.proofUrl}" target="_blank" class="text-brand-600 font-bold underline">Lihat Struk</a>` : '<span class="text-slate-400">Belum Upload</span>'}
+            </td>
+            <td class="p-3 text-right">
+              <button onclick="adminActivateOwner('${p.ownerId}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs">
+                Aktifkan Akun
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      // Render Master Tenants Table
+      const tenantTbody = document.getElementById("adminTenantTableBody");
+      const tenants = res.data.tenants || [];
+      tenantTbody.innerHTML = tenants.map(t => `
+        <tr>
+          <td class="p-3 font-mono font-bold text-slate-500">${t.ownerId}</td>
+          <td class="p-3 font-bold text-slate-900">${t.propertyName}</td>
+          <td class="p-3">${t.ownerName} (${t.phone})</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded font-extrabold text-[10px] bg-indigo-50 text-brand-700">${t.tier}</span></td>
+          <td class="p-3 font-mono">${t.unitCount} / ${t.quota}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded font-bold text-[10px] ${t.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.status}</span></td>
+          <td class="p-3 text-right">
+            <button onclick='openEditOwnerModal(${JSON.stringify(t)})' class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-xs font-bold">
+              Edit
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+  } catch (e) {
+    console.error("Gagal load admin overview:", e);
+  }
+}
+
+async function adminActivateOwner(ownerId) {
+  if (!confirm(`Konfirmasi aktivasi pembayaran akun ${ownerId}?`)) return;
+  try {
+    const res = await callApi("activateTenantPayment", { targetOwnerId: ownerId });
+    if (res.status === "success") {
+      showToast("Akun berhasil diaktifkan!", "success");
+      loadSuperAdminData();
+    } else {
+      alert(res.message);
+    }
+  } catch (e) {
+    alert("Gagal aktivasi: " + e.message);
+  }
+}
+
+function openEditOwnerModal(tenant) {
+  document.getElementById("editAdmOwnerId").value = tenant.ownerId;
+  document.getElementById("editAdmName").value = tenant.ownerName;
+  document.getElementById("editAdmPhone").value = tenant.phone;
+  document.getElementById("editAdmPropName").value = tenant.propertyName;
+  document.getElementById("editAdmTier").value = tenant.tier;
+  document.getElementById("editAdmStatus").value = tenant.status;
+  document.getElementById("editAdmPin").value = "";
+  openModal("modalEditOwnerAdmin");
+}
+
+async function submitAdminUpdateOwner() {
+  const ownerId = document.getElementById("editAdmOwnerId").value;
+  const name = document.getElementById("editAdmName").value.trim();
+  const phone = document.getElementById("editAdmPhone").value.trim();
+  const propName = document.getElementById("editAdmPropName").value.trim();
+  const tier = document.getElementById("editAdmTier").value;
+  const status = document.getElementById("editAdmStatus").value;
+  const pin = document.getElementById("editAdmPin").value.trim();
+
+  const btn = document.getElementById("btnSubmitAdminEdit");
+  btn.disabled = true;
+  btn.innerText = "Menyimpan...";
+
+  try {
+    const res = await callApi("adminUpdateOwner", {
+      targetOwnerId: ownerId,
+      name: name,
+      phone: phone,
+      propertyName: propName,
+      tier: tier,
+      status: status,
+      pin: pin
+    });
+
+    if (res.status === "success") {
+      closeModal("modalEditOwnerAdmin");
+      showToast("Data owner berhasil diperbarui!", "success");
+      loadSuperAdminData();
+    } else {
+      alert(res.message);
+    }
+  } catch (e) {
+    alert("Gagal update owner: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Simpan Perubahan";
   }
 }
 
 // ==================== DASHBOARD & ROOM MATRIX ====================
 async function fetchDashboardData() {
-  showToast("Menyinkronkan data Google Sheets...", "info");
+  showToast("Menyinkronkan data...", "info");
   try {
     const res = await callApi("getDashboardData");
     if (res.status === "success") {
@@ -406,6 +638,7 @@ function renderRoomMatrix() {
           state.activeFilter === "OVERDUE" ? room.status === "OVERDUE" :
             state.activeFilter === "VACANT" ? room.status === "VACANT" : true;
 
+    // Sanitasi String Eksplisit Anti-Crash
     const rNum = String(room.number || "").toLowerCase();
     const rTen = String(room.tenant || "").toLowerCase();
     const kw = String(state.searchKeyword || "").toLowerCase();
@@ -521,7 +754,7 @@ function promptStaffUpdateMeter(unitId, lastMeter) {
     .catch(err => alert("Gagal update meteran: " + err.message));
 }
 
-// ==================== ASYNC: BILLING INVOICE ====================
+// ==================== MODALS & FORM CONTROLLERS ====================
 function openBillingModal(unitId) {
   const room = state.rooms.find(r => r.id === unitId) || state.rooms[0];
   if (!room) return;
@@ -628,12 +861,12 @@ function dispatchOverdueWhatsApp(unitId) {
   if (!room) return;
   const phone = (room.tenantPhone || "").replace(/^0/, '62');
   const bankInfo = (state.session && state.session.bank_info) ? state.session.bank_info : "BCA 1234567890 a.n Ratna Dewi";
-  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt || room.price)}* saat ini telah jatuh tempo.\n\nMohon konfirmasi transfer ke rekening:\n*${bankInfo}*\nTerima kasih.`;
+  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt || room.price)}* telah jatuh tempo.\n\nMohon konfirmasi transfer ke rekening:\n*${bankInfo}*\nTerima kasih.`;
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 async function confirmPaymentDirect(unitId) {
-  if (!confirm("Konfirmasi bahwa tagihan kamar ini telah LUNAS diterima?")) return;
+  if (!confirm("Konfirmasi pelunasan sewa unit kamar ini?")) return;
   try {
     const res = await callApi("confirmPayment", { unitId: unitId });
     if (res.status === "success") {
@@ -707,7 +940,7 @@ async function submitOnboardingTenant() {
   }
 }
 
-// ==================== TAMBAH UNIT (DENGAN QUOTA GUARD) ====================
+// ==================== TAMBAH KAMAR & MASTER TAB ====================
 function openAddUnitModal() {
   openModal("modalAddUnit");
 }
@@ -746,7 +979,6 @@ async function submitAddUnit() {
   }
 }
 
-// ==================== MASTER TAB SWITCH & LOADER ====================
 async function loadMasterTabData() {
   try {
     const res = await callApi("getMasterData");
@@ -825,7 +1057,7 @@ function renderMasterExpenses(expenses) {
   `).join("");
 }
 
-// ==================== CATAT PENGELUARAN KAS ====================
+// ==================== BUKU KAS OPERASIONAL ====================
 function openExpenseModal() {
   openModal("modalExpense");
 }
@@ -855,7 +1087,7 @@ async function submitExpenseRecord() {
       closeModal("modalExpense");
       document.getElementById("expenseDescription").value = "";
       document.getElementById("expenseAmount").value = "";
-      showToast("Pengeluaran kas tercatat di Google Sheets!", "success");
+      showToast("Pengeluaran kas berhasil disimpan!", "success");
       fetchDashboardData();
     }
   } catch (err) {
@@ -919,7 +1151,7 @@ async function submitAddStaff() {
   const pin = document.getElementById("staffPinInput").value.trim();
 
   if (!name || !phone || pin.length < 4) {
-    alert("Lengkapi seluruh data staf dan PIN 4-6 angka.");
+    alert("Lengkapi data staf dan PIN 4-6 digit.");
     return;
   }
 
@@ -944,7 +1176,7 @@ async function submitAddStaff() {
   }
 }
 
-// ==================== PENGATURAN PROFIL & REKENING ====================
+// ==================== PROFIL & REKENING BANK ====================
 function loadProfileForm() {
   if (!state.session) return;
   const s = state.session;
@@ -1011,49 +1243,7 @@ async function submitUpdateProfile() {
   }
 }
 
-// ==================== SUPER ADMIN CONSOLE ====================
-async function loadSuperAdminData() {
-  try {
-    const res = await callApi("getAdminOverview");
-    if (res.status === "success") {
-      document.getElementById("admTotalOwners").innerText = `${res.data.totalOwners} Properti`;
-      document.getElementById("admTotalUnits").innerText = `${res.data.totalUnits} Unit`;
-      document.getElementById("admTotalMrr").innerText = formatRupiah(res.data.mrr);
-      document.getElementById("admTopTier").innerText = res.data.topTier || "PRO";
-
-      const tbody = document.getElementById("adminTenantTableBody");
-      const list = res.data.tenants || [];
-      tbody.innerHTML = list.map(t => `
-        <tr>
-          <td class="p-3 font-mono font-bold text-slate-500">${t.ownerId}</td>
-          <td class="p-3 font-bold text-slate-900">${t.propertyName}</td>
-          <td class="p-3">${t.ownerName} (${t.phone})</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded font-extrabold text-[10px] bg-indigo-50 text-brand-700">${t.tier}</span></td>
-          <td class="p-3 font-mono">${t.unitCount} / ${t.quota}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-100 text-emerald-800">${t.status}</span></td>
-          <td class="p-3 text-right">
-            <button onclick="promptUpgradeTier('${t.ownerId}', '${t.tier}')" class="px-2.5 py-1 bg-brand-50 hover:bg-brand-100 text-brand-600 rounded text-xs font-bold">Ubah Paket</button>
-          </td>
-        </tr>
-      `).join("");
-    }
-  } catch (e) {
-    console.error("Gagal load admin overview:", e);
-  }
-}
-
-function promptUpgradeTier(ownerId, currentTier) {
-  const newTier = prompt(`Pilih paket baru untuk ${ownerId} (STARTER / PRO / ENTERPRISE):`, currentTier);
-  if (!newTier) return;
-  callApi("updateTenantTier", { targetOwnerId: ownerId, newTier: newTier.toUpperCase() })
-    .then(res => {
-      showToast("Lisensi tenant diperbarui!", "success");
-      loadSuperAdminData();
-    })
-    .catch(err => alert("Gagal ubah paket: " + err.message));
-}
-
-// ==================== PUBLIC RECEIPT ROUTE ====================
+// ==================== KWITANSI RESMI (PUBLIC VIEW) ====================
 function viewReceiptDirect(unitId) {
   const room = state.rooms.find(r => r.id === unitId);
   if (!room) return;
@@ -1100,7 +1290,31 @@ async function loadPublicReceipt(token) {
   }
 }
 
-// ==================== HELPER UTILITIES ====================
+// ==================== INTERACTIVE UI HELPERS ====================
+function toggleFeatureComparison() {
+  const tbl = document.getElementById("featureComparisonTable");
+  const txt = document.getElementById("btnToggleCompareText");
+  if (tbl.classList.contains("hidden")) {
+    tbl.classList.remove("hidden");
+    txt.innerText = "Sembunyikan Perbandingan Fitur";
+  } else {
+    tbl.classList.add("hidden");
+    txt.innerText = "Bandingkan Fitur Lengkap";
+  }
+}
+
+function toggleFaq(num) {
+  const ans = document.getElementById(`faq-ans-${num}`);
+  const icon = document.getElementById(`faq-icon-${num}`);
+  if (ans.classList.contains("hidden")) {
+    ans.classList.remove("hidden");
+    icon.innerText = "−";
+  } else {
+    ans.classList.add("hidden");
+    icon.innerText = "+";
+  }
+}
+
 function setRoomFilter(filterType) {
   state.activeFilter = filterType;
   ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
@@ -1133,15 +1347,21 @@ function showToast(message, type = "info") {
   const toast = document.getElementById("toastNotification");
   const msg = document.getElementById("toastMessage");
   const icon = document.getElementById("toastIcon");
+  const bar = document.getElementById("toastProgressBar");
 
   msg.innerText = message;
-  icon.innerText = type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️";
-  toast.classList.remove("translate-y-[-100px]", "opacity-0");
+  icon.innerText = type === "success" ? "✅" : type === "error" ? "❌" : type === "warning" ? "⚠️" : "ℹ️";
+
+  bar.className = (type === "success") ? "bg-emerald-500 h-full w-full" : (type === "error") ? "bg-red-500 h-full w-full" : "bg-brand-500 h-full w-full";
+  bar.classList.add("toast-progress-active");
+
+  toast.classList.remove("translate-y-[-120px]", "opacity-0");
   toast.classList.add("translate-y-0", "opacity-100");
 
   setTimeout(() => {
-    toast.classList.add("translate-y-[-100px]", "opacity-0");
+    toast.classList.add("translate-y-[-120px]", "opacity-0");
     toast.classList.remove("translate-y-0", "opacity-100");
+    bar.classList.remove("toast-progress-active");
   }, 3000);
 }
 
