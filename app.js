@@ -185,10 +185,11 @@ function updateSidebarNav(activePath) {
   let links = [];
 
   if (role === "SUPER_ADMIN") {
+    const pendingCount = (state.adminPendingList || []).length;
     links = [
       { path: "/super-admin", tab: "console", icon: "📊", label: "Console & Statistik" },
       { path: "/super-admin", tab: "users", icon: "👥", label: "Manage Users" },
-      { path: "/super-admin", tab: "pending", icon: "⏳", label: "Verifikasi Bayar" },
+      { path: "/super-admin", tab: "pending", icon: "⏳", label: "Verifikasi Bayar", badge: pendingCount },
       { path: "/super-admin", tab: "bank", icon: "🏦", label: "Rekening Platform" },
       { path: "/profil", icon: "👤", label: "Profil Admin" }
     ];
@@ -218,9 +219,12 @@ function updateSidebarNav(activePath) {
     const clickHandler = link.tab
       ? `event.preventDefault(); navigateTo('${link.path}'); switchAdminTab('${link.tab}');`
       : `event.preventDefault(); navigateTo('${link.path}');`;
+    const badgeHtml = (link.badge !== undefined && link.badge > 0)
+      ? `<span class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black ${isActive ? 'bg-white text-brand-700' : 'bg-amber-500 text-white animate-pulse'}">${link.badge}</span>`
+      : '';
     return `
       <a href="${link.path}" onclick="${clickHandler}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors ${isActive ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
-        <span>${link.icon}</span> ${link.label}
+        <span>${link.icon}</span> <span class="font-bold">${link.label}</span> ${badgeHtml}
       </a>
     `;
   }).join("");
@@ -872,17 +876,9 @@ function switchAdminTab(tabName) {
 
   tabs.forEach(t => {
     const subviewEl = document.getElementById(`admSubview${t.charAt(0).toUpperCase() + t.slice(1)}`);
-    const btnEl = document.getElementById(`admTabBtn-${t}`);
     if (subviewEl) {
       if (t === tabName) subviewEl.classList.remove("hidden");
       else subviewEl.classList.add("hidden");
-    }
-    if (btnEl) {
-      if (t === tabName) {
-        btnEl.className = "flex items-center gap-2 px-4 py-2 rounded-xl transition-all bg-white text-brand-700 shadow-xs shrink-0 font-extrabold";
-      } else {
-        btnEl.className = "flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-slate-600 hover:text-slate-900 shrink-0 font-bold";
-      }
     }
   });
 
@@ -1031,6 +1027,10 @@ function updateAdminKpiElements({ totalOwners, pendingCount, mrr, totalUnits }) 
 
   const unitsEl = document.getElementById("admTotalUnits");
   if (unitsEl) unitsEl.innerText = `${totalUnits} Unit`;
+
+  if (state.session && state.session.role === "SUPER_ADMIN") {
+    updateSidebarNav(state.currentRoute);
+  }
 
   // Hitung rata-rata okupansi global & total omzet
   let totalOccupied = 0;
