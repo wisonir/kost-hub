@@ -1,45 +1,38 @@
 /**
  * KostHub OS — Client-Side Application Core Engine (PWA)
- * Decoupled Architecture for GitHub + Vercel Deployment
+ * (FULL ASYNC BACKEND INTEGRATED VERSION)
  */
 
-// ==================== CONFIGURATION ====================
-// Gantilah URL di bawah ini dengan deployment URL Web App Google Apps Script Anda
+// GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyfw7D6YyS-cJt7FT-Tv-so3D6M0JrrMTnSMCF39xak6SNVZtjt0Yo_MLdw-pLS34Z7_w/exec";
 
-// Global Application State
 const state = {
   token: localStorage.getItem("kosthub_token") || null,
   activeFilter: "ALL",
   searchKeyword: "",
   activeTab: "dashboard",
   rooms: [],
-  tenants: [],
-  invoices: [],
-  expenses: [],
   kpi: {
-    totalUnits: 20,
-    occupiedUnits: 18,
-    incomeMonth: 27500000,
-    overdueAmount: 3200000,
-    overdueCount: 2,
-    netCashflow: 21450000
+    totalUnits: 0,
+    occupiedUnits: 0,
+    incomeMonth: 0,
+    overdueAmount: 0,
+    overdueCount: 0,
+    netCashflow: 0
   },
+  tempKtpBase64: "",
   tempWaUrl: ""
 };
 
-// ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
   
-  // Set default dates
   const todayStr = new Date().toISOString().split("T")[0];
   const dueDateInput = document.getElementById("billingDueDate");
   const entryDateInput = document.getElementById("onboardEntryDate");
   if (dueDateInput) dueDateInput.value = todayStr;
   if (entryDateInput) entryDateInput.value = todayStr;
 
-  // Handle URL parameters for public receipt routing
   const urlParams = new URLSearchParams(window.location.search);
   const receiptToken = urlParams.get("token") || urlParams.get("t");
   if (receiptToken) {
@@ -86,17 +79,8 @@ async function handleLogin() {
       loginError.classList.remove("hidden");
     }
   } catch (err) {
-    // Demo Fallback Mode jika API GAS belum di-deploy
-    if (pin === "123456") {
-      state.token = "demo_token_authenticated";
-      localStorage.setItem("kosthub_token", state.token);
-      document.getElementById("loginModal").classList.add("hidden");
-      showToast("Mode Demo Aktif", "info");
-      renderMockData();
-    } else {
-      loginError.innerText = "Gagal menghubungi server GAS. Cek koneksi.";
-      loginError.classList.remove("hidden");
-    }
+    loginError.innerText = "Gagal terhubung ke Apps Script: " + err.message;
+    loginError.classList.remove("hidden");
   } finally {
     btnLogin.disabled = false;
     btnLogin.innerText = "Masuk ke Dashboard";
@@ -111,7 +95,6 @@ function handleLogout() {
 
 // ==================== API CLIENT GATEWAY ====================
 async function callApi(action, payload = {}) {
-  // CORS Bypass: Mengirim JSON stringify dengan Content-Type: text/plain
   const requestBody = JSON.stringify({
     action: action,
     token: state.token,
@@ -125,43 +108,28 @@ async function callApi(action, payload = {}) {
     body: requestBody
   });
 
-  if (!response.ok) throw new Error("Network response was not ok");
+  if (!response.ok) throw new Error("Jaringan bermasalah (" + response.status + ")");
   return await response.json();
 }
 
-// ==================== DATA FETCHING ====================
+// ==================== FETCH & RENDER DASHBOARD ====================
 async function fetchDashboardData() {
-  showToast("Menyinkronkan data properti...", "info");
+  showToast("Menyinkronkan data Google Sheets...", "info");
   try {
     const res = await callApi("getDashboardData");
     if (res.status === "success") {
       state.rooms = res.data.rooms || [];
-      state.tenants = res.data.tenants || [];
-      state.invoices = res.data.invoices || [];
       state.kpi = res.data.kpi || state.kpi;
       updateUI();
+      showToast("Data berhasil dimuat!", "success");
+    } else {
+      showToast(res.message, "error");
     }
   } catch (err) {
-    renderMockData();
+    showToast("Gagal memuat: " + err.message, "error");
   }
 }
 
-// Mock Data Renderer untuk Pratinjau Instan
-function renderMockData() {
-  state.rooms = [
-    { id: "UNT-101", number: "Kamar 101", floor: 1, type: "Standard AC", price: 1500000, status: "OCCUPIED", tenant: "Dimas Pratama", remainingDays: 22, overdueDays: 0, debt: 0, lastMeter: 1420 },
-    { id: "UNT-102", number: "Kamar 102", floor: 1, type: "Standard Non-AC", price: 1100000, status: "OVERDUE", tenant: "Budi Santoso", remainingDays: 0, overdueDays: 4, debt: 1600000, lastMeter: 980 },
-    { id: "UNT-103", number: "Kamar 103", floor: 1, type: "Deluxe VIP", price: 1750000, status: "DUE_TOMORROW", tenant: "Anisa Rahmawati", remainingDays: 1, overdueDays: 0, debt: 0, lastMeter: 2150 },
-    { id: "UNT-104", number: "Kamar 104", floor: 1, type: "Deluxe AC + KM Dalam", price: 1500000, status: "VACANT", tenant: null, remainingDays: 0, overdueDays: 0, debt: 0, lastMeter: 840 },
-    { id: "UNT-105", number: "Kamar 105", floor: 1, type: "Standard AC", price: 1500000, status: "OCCUPIED", tenant: "Reza Mahendra", remainingDays: 18, overdueDays: 0, debt: 0, lastMeter: 1310 },
-    { id: "UNT-201", number: "Kamar 201", floor: 2, type: "Deluxe Balcony", price: 1600000, status: "OVERDUE", tenant: "Fajar Nugraha", remainingDays: 0, overdueDays: 2, debt: 1600000, lastMeter: 1120 },
-    { id: "UNT-202", number: "Kamar 202", floor: 2, type: "Standard Room", price: 1200000, status: "MAINTENANCE", tenant: null, remainingDays: 0, overdueDays: 0, debt: 0, lastMeter: 500 },
-    { id: "UNT-203", number: "Kamar 203", floor: 2, type: "Deluxe Plus", price: 1550000, status: "OCCUPIED", tenant: "Siti Nurhaliza", remainingDays: 29, overdueDays: 0, debt: 0, lastMeter: 1780 }
-  ];
-  updateUI();
-}
-
-// ==================== UI RENDERING ====================
 function updateUI() {
   renderKpiCards();
   renderRoomMatrix();
@@ -169,9 +137,12 @@ function updateUI() {
 }
 
 function renderKpiCards() {
-  document.getElementById("kpiOccupancy").innerText = `${state.kpi.occupiedUnits}/${state.kpi.totalUnits}`;
-  document.getElementById("sidebarOccupancyText").innerText = `${state.kpi.occupiedUnits}/${state.kpi.totalUnits}`;
-  const pct = Math.round((state.kpi.occupiedUnits / state.kpi.totalUnits) * 100);
+  const occ = state.kpi.occupiedUnits || 0;
+  const tot = state.kpi.totalUnits || 1;
+  document.getElementById("kpiOccupancy").innerText = `${occ}/${tot}`;
+  document.getElementById("sidebarOccupancyText").innerText = `${occ}/${tot}`;
+  
+  const pct = Math.round((occ / tot) * 100);
   document.getElementById("kpiOccupancyPercent").innerText = `${pct}% Terisi`;
   document.getElementById("sidebarOccupancyBar").style.width = `${pct}%`;
 
@@ -180,7 +151,6 @@ function renderKpiCards() {
   document.getElementById("kpiOverdueCount").innerText = `${state.kpi.overdueCount} Kamar Menunggak`;
   document.getElementById("kpiNetCash").innerText = formatRupiah(state.kpi.netCashflow);
 
-  // Update Counters on Filter Pills
   document.getElementById("count-all").innerText = state.rooms.length;
   document.getElementById("count-occupied").innerText = state.rooms.filter(r => r.status === "OCCUPIED" || r.status === "DUE_TOMORROW").length;
   document.getElementById("count-overdue").innerText = state.rooms.filter(r => r.status === "OVERDUE").length;
@@ -205,6 +175,11 @@ function renderRoomMatrix() {
     return matchFilter && matchSearch;
   });
 
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs font-semibold">Tidak ada unit kamar dalam kategori ini.</div>`;
+    return;
+  }
+
   filtered.forEach(room => {
     const card = document.createElement("div");
     card.className = "p-4 rounded-2xl border transition-all hover:shadow-md flex flex-col justify-between ";
@@ -220,17 +195,17 @@ function renderRoomMatrix() {
             <span class="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">Terisi • Lunas</span>
           </div>
           <div class="mt-2.5">
-            <h4 class="font-bold text-slate-800 text-sm">${room.tenant}</h4>
+            <h4 class="font-bold text-slate-800 text-sm">${room.tenant || 'Penghuni'}</h4>
             <p class="text-[11px] text-slate-400">Lantai ${room.floor} • ${room.type}</p>
           </div>
           <div class="mt-3 py-1.5 px-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs font-semibold">
             <span class="text-slate-400">Sisa Periode:</span>
-            <span class="font-mono text-slate-800">${room.remainingDays} Hari Lagi</span>
+            <span class="font-mono text-slate-800">${room.remainingDays || 30} Hari</span>
           </div>
         </div>
         <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
           <button onclick="viewReceiptDirect('${room.id}')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors">Kwitansi</button>
-          <button onclick="openBillingModal('${room.id}')" class="flex-1 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-600 text-xs font-bold rounded-lg transition-colors">Detail</button>
+          <button onclick="openBillingModal('${room.id}')" class="flex-1 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-600 text-xs font-bold rounded-lg transition-colors">Tagih Baru</button>
         </div>
       `;
     } else if (room.status === "OVERDUE") {
@@ -241,47 +216,22 @@ function renderRoomMatrix() {
             <span class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span> ${room.number}
             </span>
-            <span class="text-[11px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-md">Menunggak ${room.overdueDays} Hari</span>
+            <span class="text-[11px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-md">Menunggak</span>
           </div>
           <div class="mt-2.5">
-            <h4 class="font-bold text-slate-900 text-sm">${room.tenant}</h4>
+            <h4 class="font-bold text-slate-900 text-sm">${room.tenant || 'Penghuni'}</h4>
             <p class="text-[11px] text-slate-500">Lantai ${room.floor} • ${room.type}</p>
           </div>
           <div class="mt-3 py-1.5 px-3 bg-white rounded-xl border border-red-100 flex items-center justify-between text-xs font-semibold">
             <span class="text-red-500 font-bold">Tertunggak:</span>
-            <span class="font-mono font-extrabold text-red-600">${formatRupiah(room.debt)}</span>
+            <span class="font-mono font-extrabold text-red-600">${formatRupiah(room.debt || room.price)}</span>
           </div>
         </div>
         <div class="mt-4 pt-3 border-t border-red-100 flex gap-2">
           <button onclick="dispatchOverdueWhatsApp('${room.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1">
             <span>💬</span> Tagih WA
           </button>
-          <button onclick="openBillingModal('${room.id}')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg">Detail</button>
-        </div>
-      `;
-    } else if (room.status === "DUE_TOMORROW") {
-      card.className += "bg-white border-slate-200";
-      card.innerHTML = `
-        <div>
-          <div class="flex items-center justify-between">
-            <span class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> ${room.number}
-            </span>
-            <span class="text-[11px] font-bold bg-indigo-50 text-brand-600 px-2 py-0.5 rounded-md">Tempo Besok</span>
-          </div>
-          <div class="mt-2.5">
-            <h4 class="font-bold text-slate-800 text-sm">${room.tenant}</h4>
-            <p class="text-[11px] text-slate-400">Lantai ${room.floor} • ${room.type}</p>
-          </div>
-          <div class="mt-3 py-1.5 px-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs font-semibold">
-            <span class="text-slate-400">Jatuh Tempo:</span>
-            <span class="font-mono text-slate-800">10 Okt 2026</span>
-          </div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 flex">
-          <button onclick="openBillingModal('${room.id}')" class="w-full py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5">
-            <span>📑</span> Buat Tagihan
-          </button>
+          <button onclick="confirmPaymentDirect('${room.id}')" class="px-3 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg">Lunas</button>
         </div>
       `;
     } else if (room.status === "VACANT") {
@@ -292,7 +242,7 @@ function renderRoomMatrix() {
             <span class="font-extrabold text-sm text-slate-700 flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> ${room.number}
             </span>
-            <span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">Tersedia Siap Huni</span>
+            <span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">Tersedia</span>
           </div>
           <div class="mt-2.5">
             <h4 class="font-bold text-slate-400 text-sm">Belum Ada Penghuni</h4>
@@ -309,29 +259,6 @@ function renderRoomMatrix() {
           </button>
         </div>
       `;
-    } else if (room.status === "MAINTENANCE") {
-      card.className += "bg-slate-100/60 border-slate-200";
-      card.innerHTML = `
-        <div>
-          <div class="flex items-center justify-between">
-            <span class="font-extrabold text-sm text-slate-700 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span> ${room.number}
-            </span>
-            <span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">Perbaikan / Cat</span>
-          </div>
-          <div class="mt-2.5">
-            <h4 class="font-bold text-slate-600 text-sm">Maintenance Unit</h4>
-            <p class="text-[11px] text-slate-400">Lantai ${room.floor} • ${room.type}</p>
-          </div>
-          <div class="mt-3 py-1.5 px-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
-            <span class="text-slate-400">Estimasi Siap:</span>
-            <span class="font-mono text-slate-800">12 Okt 2026</span>
-          </div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-200 flex">
-          <button onclick="setRoomReady('${room.id}')" class="w-full py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-bold rounded-lg">Setel Siap Huni</button>
-        </div>
-      `;
     }
 
     grid.appendChild(card);
@@ -340,47 +267,110 @@ function renderRoomMatrix() {
 
 function renderDueTable() {
   const tbody = document.getElementById("dueTableBody");
-  tbody.innerHTML = `
+  const overdueOrDue = state.rooms.filter(r => r.status === "OVERDUE" || r.status === "DUE_TOMORROW");
+  
+  if (overdueOrDue.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Semua tagihan sewa berstatus lunas.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = overdueOrDue.map(r => `
     <tr>
-      <td class="p-3 font-bold text-slate-900">Kamar 102</td>
-      <td class="p-3 text-slate-700">Budi Santoso</td>
-      <td class="p-3 font-mono text-red-600 font-bold">05 Okt 2026</td>
-      <td class="p-3 font-mono font-bold text-slate-900">Rp 1.600.000</td>
-      <td class="p-3"><span class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 font-bold text-[10px]">OVERDUE</span></td>
+      <td class="p-3 font-bold text-slate-900">${r.number}</td>
+      <td class="p-3 text-slate-700">${r.tenant || '-'}</td>
+      <td class="p-3 font-mono text-red-600 font-bold">Jatuh Tempo</td>
+      <td class="p-3 font-mono font-bold text-slate-900">${formatRupiah(r.debt || r.price)}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-md ${r.status === 'OVERDUE' ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-brand-700'} font-bold text-[10px]">${r.status}</span></td>
       <td class="p-3 text-right">
-        <button onclick="dispatchOverdueWhatsApp('UNT-102')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold text-xs">WA Tagihan</button>
+        <button onclick="dispatchOverdueWhatsApp('${r.id}')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold text-xs">WA Tagihan</button>
       </td>
     </tr>
-    <tr>
-      <td class="p-3 font-bold text-slate-900">Kamar 103</td>
-      <td class="p-3 text-slate-700">Anisa Rahmawati</td>
-      <td class="p-3 font-mono text-indigo-600 font-bold">10 Okt 2026</td>
-      <td class="p-3 font-mono font-bold text-slate-900">Rp 1.750.000</td>
-      <td class="p-3"><span class="px-2 py-0.5 rounded-md bg-indigo-100 text-brand-700 font-bold text-[10px]">PENDING</span></td>
-      <td class="p-3 text-right">
-        <button onclick="openBillingModal('UNT-103')" class="px-3 py-1 bg-brand-600 text-white rounded-lg font-bold text-xs">Buat Tagihan</button>
-      </td>
-    </tr>
-  `;
+  `).join("");
 }
 
-// ==================== MODAL & BILLING ACTIONS ====================
+// ==================== ASYNC: DAFTAR PENGHUNI BARU ====================
+function openOnboardModal(unitId) {
+  const room = state.rooms.find(r => r.id === unitId);
+  document.getElementById("onboardUnitId").value = unitId;
+  document.getElementById("onboardRoomTitle").innerText = `Registrasi Tamu Baru — ${room ? room.number : ''}`;
+  state.tempKtpBase64 = "";
+  document.getElementById("ktpPreviewContainer").classList.add("hidden");
+  openModal("modalOnboard");
+}
+
+function previewKtpImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.tempKtpBase64 = e.target.result;
+    document.getElementById("ktpImagePreview").src = e.target.result;
+    document.getElementById("ktpPreviewContainer").classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitOnboardingTenant() {
+  const name = document.getElementById("onboardName").value.trim();
+  const wa = document.getElementById("onboardWa").value.trim();
+  const unitId = document.getElementById("onboardUnitId").value;
+  const deposit = document.getElementById("onboardDeposit").value;
+  const entryDate = document.getElementById("onboardEntryDate").value;
+
+  if (!name || !wa) {
+    alert("Harap isi Nama Lengkap dan Nomor WhatsApp.");
+    return;
+  }
+
+  const btn = document.getElementById("btnSubmitOnboard");
+  btn.disabled = true;
+  btn.innerText = "Menyimpan ke Sheets...";
+
+  try {
+    const res = await callApi("registerTenant", {
+      unitId: unitId,
+      name: name,
+      phone: wa,
+      deposit: deposit,
+      entryDate: entryDate,
+      ktpBase64: state.tempKtpBase64
+    });
+
+    if (res.status === "success") {
+      closeModal("modalOnboard");
+      showToast("Penghuni berhasil disimpan ke Sheets!", "success");
+      await fetchDashboardData();
+    } else {
+      alert("Gagal: " + res.message);
+    }
+  } catch (err) {
+    alert("Terjadi kesalahan koneksi: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Simpan & Aktifkan Kamar";
+  }
+}
+
+// ==================== ASYNC: TERBITKAN TAGIHAN ====================
 function openBillingModal(unitId) {
   const room = state.rooms.find(r => r.id === unitId) || state.rooms[0];
+  if (!room) return;
   document.getElementById("billingUnitId").value = room.id;
+  document.getElementById("billingTenantId").value = room.tenantId || "";
   document.getElementById("billingModalTitle").innerText = `Buat Tagihan Sewa — ${room.number}`;
-  document.getElementById("billingModalSubtitle").innerText = `Penyewa: ${room.tenant || 'Tamu Baru'}`;
+  document.getElementById("billingModalSubtitle").innerText = `Penyewa: ${room.tenant || 'Penghuni'}`;
   document.getElementById("billingBasePrice").value = room.price;
   document.getElementById("billingLastMeter").value = room.lastMeter || 1000;
-  document.getElementById("billingNewMeter").value = (room.lastMeter || 1000) + 65; // Contoh estimasi awal
+  document.getElementById("billingNewMeter").value = (room.lastMeter || 1000) + 50;
 
   calculateBillingTotal();
   openModal("modalBilling");
 }
 
 function openQuickBillingModal() {
-  const overdueOrPending = state.rooms.find(r => r.status === "OVERDUE" || r.status === "DUE_TOMORROW") || state.rooms[0];
-  openBillingModal(overdueOrPending.id);
+  const target = state.rooms.find(r => r.status === "OVERDUE" || r.status === "DUE_TOMORROW") || state.rooms[0];
+  if (target) openBillingModal(target.id);
 }
 
 function calculateBillingTotal() {
@@ -391,7 +381,7 @@ function calculateBillingTotal() {
   const discount = Number(document.getElementById("billingDiscount").value) || 0;
 
   const kwh = Math.max(0, newMeter - lastMeter);
-  const electricCost = kwh * 2000; // Standar tarif Rp 2.000 / kWh
+  const electricCost = kwh * 2000;
   const total = Math.max(0, basePrice + electricCost + addFee - discount);
 
   document.getElementById("billingKwhUsage").innerText = kwh;
@@ -402,31 +392,61 @@ function calculateBillingTotal() {
 async function submitBillingInvoice() {
   const btn = document.getElementById("btnSubmitBilling");
   btn.disabled = true;
-  btn.innerText = "Menerbitkan...";
+  btn.innerText = "Menerbitkan ke Sheets...";
 
   const unitId = document.getElementById("billingUnitId").value;
+  const tenantId = document.getElementById("billingTenantId").value;
   const room = state.rooms.find(r => r.id === unitId);
-  const totalText = document.getElementById("billingTotalDisplay").innerText;
+  const baseRent = document.getElementById("billingBasePrice").value;
+  const lastMeter = Number(document.getElementById("billingLastMeter").value) || 0;
+  const newMeter = Number(document.getElementById("billingNewMeter").value) || lastMeter;
+  const kwh = Math.max(0, newMeter - lastMeter);
+  const utilityCost = kwh * 2000;
+  const addFee = document.getElementById("billingAdditionalFee").value;
+  const discount = document.getElementById("billingDiscount").value;
+  const period = document.getElementById("billingPeriod").value;
+  const dueDate = document.getElementById("billingDueDate").value;
 
-  // Susun template pesan WhatsApp
-  const message = `Halo Sdr/i *${room ? room.tenant : 'Penghuni'}*,\nBerikut rincian tagihan sewa *${room ? room.number : 'Kamar'}*:\n\n` +
-    `• Periode: ${document.getElementById("billingPeriod").value}\n` +
-    `• Sewa Pokok: ${formatRupiah(Number(document.getElementById("billingBasePrice").value))}\n` +
-    `• Listrik: ${document.getElementById("billingKwhUsage").innerText} kWh (${document.getElementById("billingElectricityCost").innerText})\n` +
-    `• Iuran Sampah: ${formatRupiah(Number(document.getElementById("billingAdditionalFee").value))}\n` +
-    `-----------------------------------\n` +
-    `*TOTAL TAGIHAN: ${totalText}*\n` +
-    `Jatuh Tempo: ${document.getElementById("billingDueDate").value}\n\n` +
-    `Mohon transfer ke:\n*BCA 1234567890 a.n Hendra Wijaya*\n\n` +
-    `Kwitansi Digital: https://kosthub.vercel.app/?token=INV-${Date.now().toString().slice(-4)}`;
+  try {
+    const res = await callApi("createInvoice", {
+      unitId: unitId,
+      tenantId: tenantId,
+      period: period,
+      dueDate: dueDate,
+      baseRent: baseRent,
+      utilityCost: utilityCost,
+      additionalFee: addFee,
+      discount: discount,
+      newMeter: newMeter
+    });
 
-  state.tempWaUrl = `https://wa.me/6281270000000?text=${encodeURIComponent(message)}`;
-  document.getElementById("waMessagePreview").innerText = message;
+    if (res.status === "success") {
+      const message = `Halo Sdr/i *${room ? room.tenant : 'Penghuni'}*,\nBerikut rincian tagihan sewa *${room ? room.number : 'Kamar'}*:\n\n` +
+        `• Periode: ${period}\n` +
+        `• Sewa Pokok: ${formatRupiah(baseRent)}\n` +
+        `• Listrik: ${kwh} kWh (${formatRupiah(utilityCost)})\n` +
+        `• Iuran Sampah/Air: ${formatRupiah(addFee)}\n` +
+        `-----------------------------------\n` +
+        `*TOTAL TAGIHAN: ${formatRupiah(res.data.total)}*\n` +
+        `Jatuh Tempo: ${dueDate}\n\n` +
+        `Mohon transfer ke:\n*BCA 1234567890 a.n Hendra Wijaya*\n\n` +
+        `Kwitansi Digital: ${window.location.origin}/?token=${res.data.token}`;
 
-  closeModal("modalBilling");
-  openModal("modalWhatsApp");
-  btn.disabled = false;
-  btn.innerText = "💾 Terbitkan & Siapkan WA";
+      state.tempWaUrl = `https://wa.me/${(room && room.tenantPhone) ? room.tenantPhone.replace(/^0/, '62') : ''}?text=${encodeURIComponent(message)}`;
+      document.getElementById("waMessagePreview").innerText = message;
+
+      closeModal("modalBilling");
+      openModal("modalWhatsApp");
+      await fetchDashboardData();
+    } else {
+      alert("Gagal menerbitkan tagihan: " + res.message);
+    }
+  } catch (err) {
+    alert("Koneksi gagal: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "💾 Terbitkan & Siapkan WA";
+  }
 }
 
 function dispatchWhatsAppUrl() {
@@ -438,130 +458,71 @@ function dispatchWhatsAppUrl() {
 function dispatchOverdueWhatsApp(unitId) {
   const room = state.rooms.find(r => r.id === unitId);
   if (!room) return;
-  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan bahwa tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt)}* saat ini telah melewati batas jatuh tempo (${room.overdueDays} hari).\n\nMohon konfirmasi pelunasannya melalui transfer ke BCA 1234567890 a.n Hendra Wijaya. Terima kasih.`;
-  window.open(`https://wa.me/6281270000000?text=${encodeURIComponent(msg)}`, "_blank");
+  const phone = (room.tenantPhone || "").replace(/^0/, '62');
+  const msg = `Halo Sdr/i *${room.tenant}*,\nKami menginformasikan tagihan sewa *${room.number}* sebesar *${formatRupiah(room.debt || room.price)}* saat ini telah jatuh tempo.\n\nMohon konfirmasi pelunasannya melalui transfer BCA 1234567890 a.n Hendra Wijaya. Terima kasih.`;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
-// ==================== ONBOARDING TENANT ====================
-function openOnboardModal(unitId) {
-  const room = state.rooms.find(r => r.id === unitId);
-  document.getElementById("onboardUnitId").value = unitId;
-  document.getElementById("onboardRoomTitle").innerText = `Registrasi Tamu Baru — ${room ? room.number : ''}`;
-  openModal("modalOnboard");
-}
-
-function previewKtpImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById("ktpImagePreview").src = e.target.result;
-    document.getElementById("ktpPreviewContainer").classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
-}
-
-function submitOnboardingTenant() {
-  const name = document.getElementById("onboardName").value.trim();
-  const wa = document.getElementById("onboardWa").value.trim();
-  const unitId = document.getElementById("onboardUnitId").value;
-
-  if (!name || !wa) {
-    alert("Harap isi Nama Lengkap dan Nomor WhatsApp.");
-    return;
+async function confirmPaymentDirect(unitId) {
+  if (!confirm("Konfirmasi bahwa tagihan unit ini telah LUNAS diterima?")) return;
+  try {
+    const res = await callApi("confirmPayment", { unitId: unitId });
+    if (res.status === "success") {
+      showToast("Pembayaran diverifikasi lunas!", "success");
+      await fetchDashboardData();
+    } else {
+      alert("Gagal: " + res.message);
+    }
+  } catch (e) {
+    alert("Koneksi gagal: " + e.message);
   }
-
-  const room = state.rooms.find(r => r.id === unitId);
-  if (room) {
-    room.status = "OCCUPIED";
-    room.tenant = name;
-    room.remainingDays = 30;
-    room.debt = 0;
-  }
-
-  closeModal("modalOnboard");
-  showToast("Penghuni berhasil didaftarkan!", "success");
-  updateUI();
 }
 
-// ==================== EXPENSE & CASHFLOW ====================
+// ==================== ASYNC: CATAT PENGELUARAN ====================
 function openExpenseModal() {
   openModal("modalExpense");
 }
 
-function submitExpenseRecord() {
+async function submitExpenseRecord() {
   const desc = document.getElementById("expenseDescription").value.trim();
   const amount = Number(document.getElementById("expenseAmount").value) || 0;
+  const category = document.getElementById("expenseCategory").value;
 
   if (!desc || amount <= 0) {
     alert("Harap isi keterangan dan nominal pengeluaran.");
     return;
   }
 
-  state.kpi.netCashflow -= amount;
-  closeModal("modalExpense");
-  showToast("Pengeluaran berhasil dicatat!", "success");
-  updateUI();
-}
+  const btn = document.getElementById("btnSubmitExpense");
+  btn.disabled = true;
+  btn.innerText = "Menyimpan...";
 
-// ==================== DIGITAL RECEIPT MODAL ====================
-function viewReceiptDirect(unitId) {
-  const room = state.rooms.find(r => r.id === unitId);
-  if (!room) return;
+  try {
+    const res = await callApi("recordExpense", {
+      category: category,
+      description: desc,
+      amount: amount
+    });
 
-  document.getElementById("rcptInvId").innerText = `INV-202610-${room.id.replace('UNT-', '')}`;
-  document.getElementById("rcptPaidDate").innerText = new Date().toISOString().split("T")[0];
-  document.getElementById("rcptTenantName").innerText = room.tenant || "Penghuni";
-  document.getElementById("rcptUnitNumber").innerText = room.number;
-  document.getElementById("rcptTotalPaid").innerText = formatRupiah(room.price);
-
-  document.getElementById("rcptTableItems").innerHTML = `
-    <tr>
-      <td class="py-2 text-slate-700">Sewa Kamar Dasar (${room.type})</td>
-      <td class="py-2 text-right font-mono font-bold">${formatRupiah(room.price)}</td>
-    </tr>
-    <tr>
-      <td class="py-2 text-slate-700">Iuran Kebersihan & Fasilitas</td>
-      <td class="py-2 text-right font-mono font-bold">Termasuk</td>
-    </tr>
-  `;
-
-  document.getElementById("receiptContainer").classList.remove("hidden");
-}
-
-function loadPublicReceipt(token) {
-  document.getElementById("rcptInvId").innerText = `INV-TOKEN-${token}`;
-  document.getElementById("rcptTotalPaid").innerText = "Rp 1.650.000";
-  document.getElementById("receiptContainer").classList.remove("hidden");
-}
-
-function closeReceiptView() {
-  document.getElementById("receiptContainer").classList.add("hidden");
-}
-
-// ==================== HELPER UTILITIES ====================
-function setRoomFilter(filterType) {
-  state.activeFilter = filterType;
-  ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
-    const el = document.getElementById(`filter-pill-${type}`);
-    if (el) {
-      if (type === filterType) {
-        el.className = "px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors";
-      } else {
-        el.className = "px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors";
-      }
+    if (res.status === "success") {
+      closeModal("modalExpense");
+      document.getElementById("expenseDescription").value = "";
+      document.getElementById("expenseAmount").value = "";
+      showToast("Pengeluaran kas tercatat di Google Sheets!", "success");
+      await fetchDashboardData();
+    } else {
+      alert("Gagal menyimpan: " + res.message);
     }
-  });
-  renderRoomMatrix();
+  } catch (err) {
+    alert("Koneksi gagal: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Simpan Transaksi Kas";
+  }
 }
 
-function filterRooms() {
-  state.searchKeyword = document.getElementById("searchRoomInput").value.toLowerCase();
-  renderRoomMatrix();
-}
-
-function switchTab(tabId) {
+// ==================== MASTER TAB SWITCH & LOADER ====================
+async function switchTab(tabId) {
   state.activeTab = tabId;
   ["dashboard", "units", "tenants", "cashflow"].forEach(tab => {
     const view = document.getElementById(`view-${tab}`);
@@ -578,6 +539,166 @@ function switchTab(tabId) {
       if (navM) navM.className = "flex flex-col items-center gap-1 text-slate-500";
     }
   });
+
+  if (tabId !== "dashboard") {
+    loadMasterTabData();
+  }
+}
+
+async function loadMasterTabData() {
+  try {
+    const res = await callApi("getMasterData");
+    if (res.status === "success") {
+      renderMasterUnits(res.data.units || []);
+      renderMasterTenants(res.data.tenants || []);
+      renderMasterExpenses(res.data.expenses || []);
+    }
+  } catch (e) {
+    console.error("Gagal load master:", e);
+  }
+}
+
+function renderMasterUnits(units) {
+  const tbody = document.getElementById("unitMasterTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = units.map(u => `
+    <tr>
+      <td class="p-3 font-bold">${u[1]}</td>
+      <td class="p-3">Lantai ${u[2]}</td>
+      <td class="p-3">${u[3]}</td>
+      <td class="p-3 font-mono font-bold">${formatRupiah(u[4])}</td>
+      <td class="p-3 text-slate-500">${u[5]}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u[6] === 'OCCUPIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${u[6]}</span></td>
+      <td class="p-3 text-right font-mono text-[11px] text-slate-400">${u[0]}</td>
+    </tr>
+  `).join("");
+}
+
+function renderMasterTenants(tenants) {
+  const tbody = document.getElementById("tenantMasterTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = tenants.map(t => `
+    <tr>
+      <td class="p-3 font-bold text-slate-900">${t[1]}</td>
+      <td class="p-3 font-mono text-slate-600">${t[3]}</td>
+      <td class="p-3">${t[5] ? new Date(t[5]).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="p-3 font-mono font-bold">${formatRupiah(t[7])}</td>
+      <td class="p-3">${t[8] && t[8].startsWith('http') ? `<a href="${t[8]}" target="_blank" class="text-brand-600 font-bold underline">Lihat KTP</a>` : '<span class="text-slate-400">Tidak Ada</span>'}</td>
+      <td class="p-3 text-right"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">${t[9]}</span></td>
+    </tr>
+  `).join("");
+}
+
+function renderMasterExpenses(expenses) {
+  const tbody = document.getElementById("expenseTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = expenses.map(x => `
+    <tr>
+      <td class="p-3 text-slate-600 font-sans">${x[1] ? new Date(x[1]).toLocaleDateString('id-ID') : '-'}</td>
+      <td class="p-3 font-sans font-bold text-slate-700">${x[2]}</td>
+      <td class="p-3 font-sans">${x[3]}</td>
+      <td class="p-3 font-sans text-slate-500">${x[5]}</td>
+      <td class="p-3 text-right font-bold text-red-600">${formatRupiah(x[4])}</td>
+    </tr>
+  `).join("");
+}
+
+// ==================== MODAL TAMBAH KAMAR ====================
+function openAddUnitModal() {
+  openModal("modalAddUnit");
+}
+
+async function submitAddUnit() {
+  const num = document.getElementById("unitNumberInput").value.trim();
+  const floor = document.getElementById("unitFloorInput").value;
+  const type = document.getElementById("unitTypeInput").value.trim();
+  const price = document.getElementById("unitPriceInput").value;
+  const meter = document.getElementById("unitMeterInput").value;
+
+  if (!num || !price) {
+    alert("Harap isi nomor kamar dan harga sewa.");
+    return;
+  }
+
+  try {
+    const res = await callApi("saveUnit", {
+      number: num,
+      floor: floor,
+      type: type,
+      price: price,
+      meter: meter
+    });
+
+    if (res.status === "success") {
+      closeModal("modalAddUnit");
+      showToast("Unit kamar baru berhasil ditambahkan!", "success");
+      await fetchDashboardData();
+      await loadMasterTabData();
+    }
+  } catch (e) {
+    alert("Gagal menambah kamar: " + e.message);
+  }
+}
+
+// ==================== KWITANSI VIEW ====================
+function viewReceiptDirect(unitId) {
+  const room = state.rooms.find(r => r.id === unitId);
+  if (!room) return;
+
+  document.getElementById("rcptInvId").innerText = `INV-202610-${room.id.replace('UNT-', '')}`;
+  document.getElementById("rcptPaidDate").innerText = new Date().toISOString().split("T")[0];
+  document.getElementById("rcptTenantName").innerText = room.tenant || "Penghuni";
+  document.getElementById("rcptUnitNumber").innerText = room.number;
+  document.getElementById("rcptTotalPaid").innerText = formatRupiah(room.price);
+
+  document.getElementById("rcptTableItems").innerHTML = `
+    <tr>
+      <td class="py-2 text-slate-700">Sewa Kamar (${room.type})</td>
+      <td class="py-2 text-right font-mono font-bold">${formatRupiah(room.price)}</td>
+    </tr>
+    <tr>
+      <td class="py-2 text-slate-700">Iuran Fasilitas & Air</td>
+      <td class="py-2 text-right font-mono font-bold">Termasuk</td>
+    </tr>
+  `;
+
+  document.getElementById("receiptContainer").classList.remove("hidden");
+}
+
+async function loadPublicReceipt(token) {
+  try {
+    const res = await fetch(`${GAS_API_URL}?action=getPublicReceipt&token=${token}`);
+    const json = await res.json();
+    if (json.status === "success") {
+      document.getElementById("rcptInvId").innerText = json.data.invoiceId;
+      document.getElementById("rcptTotalPaid").innerText = formatRupiah(json.data.total);
+      document.getElementById("receiptContainer").classList.remove("hidden");
+    }
+  } catch (e) {
+    console.error("Gagal load kwitansi publik:", e);
+  }
+}
+
+function closeReceiptView() {
+  document.getElementById("receiptContainer").classList.add("hidden");
+}
+
+function setRoomFilter(filterType) {
+  state.activeFilter = filterType;
+  ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
+    const el = document.getElementById(`filter-pill-${type}`);
+    if (el) {
+      el.className = (type === filterType) 
+        ? "px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors"
+        : "px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors";
+    }
+  });
+  renderRoomMatrix();
+}
+
+function filterRooms() {
+  state.searchKeyword = document.getElementById("searchRoomInput").value.toLowerCase();
+  renderRoomMatrix();
 }
 
 function openModal(id) {
