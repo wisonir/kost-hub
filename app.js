@@ -702,14 +702,14 @@ function loadPaymentPageView() {
 
   const propNameEl = document.getElementById("payPropName");
   if (propNameEl) propNameEl.innerText = data.propertyName || "-";
-  
+
   const tierNameEl = document.getElementById("payTierName");
   if (tierNameEl) {
     const tier = data.tier || "PRO";
     const quotaText = tier === "STARTER" ? "Maks 5 Kamar" : (tier === "PRO" ? "Maks 25 Kamar" : "Unlimited");
     tierNameEl.innerText = `${tier} (${quotaText})`;
   }
-  
+
   const totalAmountEl = document.getElementById("payTotalAmount");
   if (totalAmountEl) totalAmountEl.innerText = tierPrices[data.tier] || "Rp 99.000";
 
@@ -720,8 +720,8 @@ function loadPaymentPageView() {
   const statusBadgeText = document.getElementById("payStatusBadgeText");
 
   const isSubmitted = Boolean(
-    data.paymentProofSubmitted || 
-    data.status === "PENDING_VERIFICATION" || 
+    data.paymentProofSubmitted ||
+    data.status === "PENDING_VERIFICATION" ||
     (state.session && state.session.status === "PENDING_VERIFICATION") ||
     data.proofUrl
   );
@@ -748,7 +748,7 @@ function loadPaymentPageView() {
     if (uploadSection) uploadSection.classList.remove("hidden");
     if (waitingSection) waitingSection.classList.add("hidden");
     if (statusBadgeText) statusBadgeText.innerText = "Menunggu Pembayaran";
-    
+
     // Render dynamic active platform banks
     renderPublicPaymentBanks();
   }
@@ -836,7 +836,7 @@ async function submitPaymentProof() {
 
     // Senada dengan aplikasi: Toast modern, JANGAN alert browser, JANGAN LOGOUT!
     showToast("Bukti pembayaran berhasil dikirimkan! Menunggu verifikasi tim Super Admin.", "success");
-    
+
     // Tetap di halaman pembayaran, tampilkan informasi status pembayarannya
     loadPaymentPageView();
   } catch (err) {
@@ -965,14 +965,14 @@ async function loadSuperAdminData() {
     if (res.status === "success" && res.data) {
       state.adminTenants = res.data.tenants || [];
       state.adminPendingList = res.data.pendingTenants || [];
-      
+
       const kpi = {
         totalOwners: res.data.totalOwners || state.adminTenants.length,
         pendingCount: res.data.pendingCount !== undefined ? res.data.pendingCount : state.adminPendingList.length,
         mrr: res.data.mrr || (state.adminTenants.length * 99000),
         totalUnits: res.data.totalUnits || 0
       };
-      
+
       updateAdminKpiElements(kpi);
       renderSuperAdminViews();
       return;
@@ -1077,7 +1077,7 @@ function updateAdminKpiElements({ totalOwners, pendingCount, mrr, totalUnits }) 
   const badgePill = document.getElementById("admPendingBadgePill");
   if (badgePill) {
     badgePill.innerText = pendingCount;
-    badgePill.className = pendingCount > 0 
+    badgePill.className = pendingCount > 0
       ? "px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse"
       : "px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-200 text-slate-700";
   }
@@ -1102,7 +1102,7 @@ function updateAdminKpiElements({ totalOwners, pendingCount, mrr, totalUnits }) 
     totalRevenue += (t.incomeMonth || 0);
   });
   const avgOcc = totalCap > 0 ? Math.round((totalOccupied / totalCap) * 100) : 0;
-  
+
   const avgOccEl = document.getElementById("admAvgOccupancy");
   if (avgOccEl) avgOccEl.innerText = `${avgOcc}%`;
 
@@ -1205,8 +1205,8 @@ function getFilteredAdminOwnerStats() {
   let filtered = tenants.filter(t => {
     if (!query) return true;
     return (t.propertyName || "").toLowerCase().includes(query) ||
-           (t.ownerName || "").toLowerCase().includes(query) ||
-           (t.ownerId || "").toLowerCase().includes(query);
+      (t.ownerName || "").toLowerCase().includes(query) ||
+      (t.ownerId || "").toLowerCase().includes(query);
   });
 
   if (sort === "OCCUPANCY_DESC") {
@@ -1239,7 +1239,7 @@ function openTenantStatsModal(ownerId) {
 
   const propTitle = document.getElementById("statsPropNameTitle");
   if (propTitle) propTitle.innerText = `${t.propertyName} (${t.ownerName})`;
-  
+
   const unitCount = t.unitCount || 0;
   const occupied = t.occupiedUnits !== undefined ? t.occupiedUnits : Math.floor(unitCount * 0.8);
   const occupancyPct = unitCount > 0 ? Math.round((occupied / unitCount) * 100) : 0;
@@ -1273,7 +1273,7 @@ function openTenantStatsModal(ownerId) {
   const statStatusEl = document.getElementById("statStatus");
   if (statStatusEl) {
     statStatusEl.innerText = t.status;
-    statStatusEl.className = t.status === "ACTIVE" 
+    statStatusEl.className = t.status === "ACTIVE"
       ? "px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 text-[10px]"
       : "px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 text-[10px]";
   }
@@ -1510,13 +1510,13 @@ function bulkChatSelectedOwnersWhatsApp() {
 
 function bulkExportSelectedOwnersCSV() {
   const selected = Array.from(state.adminSelectedOwnerIds);
-  const tenants = selected.length > 0 
+  const tenants = selected.length > 0
     ? (state.adminTenants || []).filter(t => selected.includes(t.ownerId))
     : (state.adminTenants || []);
 
   const header = "ID Owner,Nama Properti,Nama Owner,WhatsApp,Paket,Jumlah Kamar,Kuota,Status\n";
   const rows = tenants.map(t => `"${t.ownerId}","${t.propertyName}","${t.ownerName}","${t.phone}","${t.tier}",${t.unitCount},${t.quota},"${t.status}"`).join("\n");
-  
+
   const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1708,9 +1708,9 @@ function toggleSelectRowPending(ownerId, isChecked) {
 
 // Konfirmasi Aktivasi Pembayaran Akun dengan Custom Confirm Dialog Iconic & Modern Toast
 async function adminActivateOwner(ownerId) {
-  const p = (state.adminPendingList || []).find(x => x.ownerId === ownerId) || 
-            (state.adminTenants || []).find(x => x.ownerId === ownerId) || 
-            { ownerId, propertyName: "Akun Properti", ownerName: "Owner", tier: "PRO" };
+  const p = (state.adminPendingList || []).find(x => x.ownerId === ownerId) ||
+    (state.adminTenants || []).find(x => x.ownerId === ownerId) ||
+    { ownerId, propertyName: "Akun Properti", ownerName: "Owner", tier: "PRO" };
 
   const confirmed = await showCustomConfirm({
     title: "Konfirmasi Aktivasi Pembayaran",
@@ -2295,101 +2295,88 @@ function previewKtpImage(event) {
 }
 
 async function submitOnboardingTenant() {
+  const editId = document.getElementById("tenantEditId").value.trim();
   const name = document.getElementById("onboardName").value.trim();
   const wa = document.getElementById("onboardWa").value.trim();
-  const unitId = document.getElementById("onboardUnitId").value;
-  const deposit = document.getElementById("onboardDeposit").value;
+  const emergency = document.getElementById("onboardEmergency").value.trim();
+  const deposit = Number(document.getElementById("onboardDeposit").value) || 0;
   const entryDate = document.getElementById("onboardEntryDate").value;
 
+  const selectRoomEl = document.getElementById("onboardSelectRoom");
+  const selectedRoomId = selectRoomEl ? selectRoomEl.value : document.getElementById("onboardUnitId").value;
+  const targetRoom = state.rooms.find(r => r.id === selectedRoomId || r.number === selectedRoomId);
+
   if (!name || !wa) {
-    alert("Nama dan No. WhatsApp wajib diisi.");
+    showToast("Nama lengkap dan No. WhatsApp penghuni wajib diisi!", "warning");
     return;
   }
 
   const btn = document.getElementById("btnSubmitOnboard");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan ke Sheets...";
+  if (btn) { btn.disabled = true; btn.innerText = "Menyimpan ke Sheets..."; }
 
   try {
     const res = await callApi("registerTenant", {
-      unitId: unitId,
+      unitId: targetRoom ? targetRoom.id : selectedRoomId,
       name: name,
       phone: wa,
       deposit: deposit,
       entryDate: entryDate,
-      ktpBase64: state.tempKtpBase64
+      ktpBase64: state.tempKtpBase64 || ""
     });
-
     if (res.status === "success") {
-      closeModal("modalOnboard");
-      showToast("Penghuni berhasil disimpan!", "success");
-      fetchDashboardData();
+      showToast(`Penghuni ${name} berhasil disinkronkan ke Google Sheets!`, "success");
     }
   } catch (err) {
-    alert("Gagal: " + err.message);
+    console.warn("GAS API offline/gagal, menyimpan ke state lokal:", err.message);
   } finally {
-    btn.disabled = false;
-    btn.innerText = "Simpan & Aktifkan Kamar";
-  }
-}
-
-// ==================== TAMBAH KAMAR & MASTER TAB ====================
-function openAddUnitModal() {
-  openModal("modalAddUnit");
-}
-
-async function submitAddUnit() {
-  const num = document.getElementById("unitNumberInput").value.trim();
-  const floor = document.getElementById("unitFloorInput").value;
-  const type = document.getElementById("unitTypeInput").value.trim();
-  const price = document.getElementById("unitPriceInput").value;
-  const meter = document.getElementById("unitMeterInput").value;
-
-  if (!num || !price) {
-    alert("Nomor kamar dan harga sewa wajib diisi.");
-    return;
+    if (btn) { btn.disabled = false; btn.innerText = "Simpan & Aktifkan Penghuni"; }
   }
 
-  try {
-    const res = await callApi("saveUnit", {
-      number: num,
-      floor: floor,
-      type: type,
-      price: price,
-      meter: meter
-    });
-
-    if (res.status === "success") {
-      closeModal("modalAddUnit");
-      showToast("Unit kamar baru berhasil disimpan!", "success");
-      fetchDashboardData();
-      loadMasterTabData();
-    } else {
-      alert(res.message);
+  if (editId) {
+    const t = (state.dummyTenants || []).find(x => x.id === editId);
+    if (t) {
+      t.name = name;
+      t.phone = wa;
+      t.emergency = emergency;
+      t.deposit = deposit;
+      t.startDate = entryDate;
+      if (targetRoom) {
+        t.roomNumber = targetRoom.number;
+        t.rent = targetRoom.price;
+      }
     }
-  } catch (e) {
-    alert("Gagal menambah kamar: " + e.message);
-  }
-}
-
-async function loadMasterTabData() {
-  try {
-    const res = await callApi("getMasterData");
-    if (res.status === "success") {
-      renderMasterUnits(res.data.units || []);
-      renderMasterTenants(res.data.tenants || []);
-      renderMasterExpenses(res.data.expenses || []);
-      renderMasterInvoices(res.data.invoices || []);
-      populateRoomSelectDropdowns();
+  } else {
+    if (!targetRoom) {
+      showToast("Pilih unit kamar kost yang akan disewa!", "warning");
       return;
     }
-  } catch (e) {
-    // Gunakan local dummy dataset saat offline / demo
+
+    const newId = "TNT-" + Date.now().toString().slice(-4);
+    if (!state.dummyTenants) state.dummyTenants = [];
+    state.dummyTenants.push({
+      id: newId,
+      roomNumber: targetRoom.number,
+      name: name,
+      phone: wa,
+      emergency: emergency,
+      startDate: entryDate || new Date().toISOString().split("T")[0],
+      deposit: deposit,
+      rent: targetRoom.price,
+      status: "ACTIVE",
+      ktp: ""
+    });
+
+    targetRoom.status = "OCCUPIED";
+    targetRoom.tenant = name;
+    targetRoom.phone = wa;
+    targetRoom.dueDate = entryDate ? formatDateDMY(entryDate) : formatDateDMY(new Date().toISOString().split("T")[0]);
   }
-  renderMasterUnitsTable();
+
+  saveDummyState();
+  closeModal("modalOnboard");
+  updateDashboardUI();
+  renderRoomMatrix(state.rooms);
   renderMasterTenantsTable();
-  renderMasterInvoicesTable();
-  filterMasterExpensesTable();
   populateRoomSelectDropdowns();
 }
 
@@ -2466,1976 +2453,6 @@ async function submitExpenseRecord() {
   const desc = document.getElementById("expenseDescription").value.trim();
   const amount = Number(document.getElementById("expenseAmount").value) || 0;
   const category = document.getElementById("expenseCategory").value;
-
-  if (!desc || amount <= 0) {
-    alert("Keterangan dan nominal pengeluaran wajib diisi.");
-    return;
-  }
-
-  const btn = document.getElementById("btnSubmitExpense");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan...";
-
-  try {
-    const res = await callApi("recordExpense", {
-      category: category,
-      description: desc,
-      amount: amount
-    });
-
-    if (res.status === "success") {
-      closeModal("modalExpense");
-      document.getElementById("expenseDescription").value = "";
-      document.getElementById("expenseAmount").value = "";
-      showToast("Pengeluaran kas berhasil disimpan!", "success");
-      fetchDashboardData();
-    }
-  } catch (err) {
-    alert("Gagal: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Simpan Transaksi Kas";
-  }
-}
-
-// ==================== KELOLA STAF LAPANGAN ====================
-async function loadStaffData() {
-  try {
-    const res = await callApi("getStaffList");
-    if (res.status === "success") {
-      const container = document.getElementById("staffCardsContainer");
-      const badge = document.getElementById("staffQuotaBadge");
-      const staffList = res.data.staff || [];
-      const quota = res.data.quota || 2;
-
-      badge.innerText = `Kuota: ${staffList.length}/${quota}`;
-
-      if (staffList.length === 0) {
-        container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs font-semibold">Belum ada akun staf yang didaftarkan.</div>`;
-        return;
-      }
-
-      container.innerHTML = staffList.map(st => `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-                <span class="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-xs">${st.name[0]}</span>
-                ${st.name}
-              </span>
-              <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">${st.status}</span>
-            </div>
-            <div class="mt-4 space-y-1.5 text-xs text-slate-600">
-              <p>WhatsApp: <b class="font-mono text-slate-800">${st.phone}</b></p>
-              <p>Hak Akses: <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">Input Meteran & Cek Kamar</span></p>
-            </div>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-100 flex justify-end">
-            <span class="text-[10px] text-slate-400 font-mono">ID: ${st.id}</span>
-          </div>
-        </div>
-      `).join("");
-    }
-  } catch (e) {
-    console.error("Gagal load staf:", e);
-  }
-}
-
-function openAddStaffModal() {
-  openModal("modalAddStaff");
-}
-
-async function submitAddStaff() {
-  const name = document.getElementById("staffNameInput").value.trim();
-  const phone = document.getElementById("staffPhoneInput").value.trim();
-  const pin = document.getElementById("staffPinInput").value.trim();
-
-  if (!name || !phone || pin.length < 4) {
-    alert("Lengkapi data staf dan PIN 4-6 digit.");
-    return;
-  }
-
-  const btn = document.getElementById("btnSubmitStaff");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan...";
-
-  try {
-    const res = await callApi("saveStaff", { name: name, phone: phone, pin: pin });
-    if (res.status === "success") {
-      closeModal("modalAddStaff");
-      showToast("Akun staf berhasil dibuat!", "success");
-      loadStaffData();
-    } else {
-      alert(res.message);
-    }
-  } catch (e) {
-    alert("Gagal: " + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Simpan Akun Staf";
-  }
-}
-
-// ==================== PROFIL & REKENING BANK ====================
-function loadProfileForm() {
-  if (!state.session) return;
-  const s = state.session;
-  document.getElementById("profNameInput").value = s.name || "";
-  document.getElementById("profPhoneInput").value = s.phone_wa || "";
-  document.getElementById("profPropertyNameInput").value = s.property_name || "";
-  document.getElementById("profBankInfoInput").value = s.bank_info || "";
-  document.getElementById("profNewPinInput").value = "";
-  document.getElementById("profOldPinInput").value = "";
-
-  const bankSec = document.getElementById("ownerBankSettingsSection");
-  if (s.role !== "OWNER") {
-    bankSec.classList.add("hidden");
-  } else {
-    bankSec.classList.remove("hidden");
-  }
-}
-
-async function submitUpdateProfile() {
-  const name = document.getElementById("profNameInput").value.trim();
-  const phone = document.getElementById("profPhoneInput").value.trim();
-  const propName = document.getElementById("profPropertyNameInput").value.trim();
-  const bankInfo = document.getElementById("profBankInfoInput").value.trim();
-  const newPin = document.getElementById("profNewPinInput").value.trim();
-  const oldPin = document.getElementById("profOldPinInput").value.trim();
-
-  if (!oldPin) {
-    alert("PIN Lama wajib diisi untuk konfirmasi keamanan.");
-    return;
-  }
-
-  const btn = document.getElementById("btnSubmitProfile");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan...";
-
-  try {
-    const res = await callApi("updateProfile", {
-      name: name,
-      phone: phone,
-      propertyName: propName,
-      bankInfo: bankInfo,
-      newPin: newPin,
-      oldPin: oldPin
-    });
-
-    if (res.status === "success") {
-      state.session.name = name;
-      state.session.phone_wa = phone;
-      state.session.property_name = propName;
-      state.session.bank_info = bankInfo;
-      localStorage.setItem("kosthub_session", JSON.stringify(state.session));
-      showToast("Profil berhasil diperbarui!", "success");
-      updateHeaderUI();
-      document.getElementById("profOldPinInput").value = "";
-      document.getElementById("profNewPinInput").value = "";
-    } else {
-      alert(res.message);
-    }
-  } catch (e) {
-    alert("Gagal update profil: " + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "💾 Simpan Perubahan Profil";
-  }
-}
-
-// ==================== KWITANSI RESMI (PUBLIC VIEW) ====================
-function viewReceiptDirect(unitId) {
-  const room = state.rooms.find(r => r.id === unitId);
-  if (!room) return;
-
-  document.getElementById("rcptInvId").innerText = `INV-202610-${room.id.replace('UNT-', '')}`;
-  document.getElementById("rcptPaidDate").innerText = new Date().toISOString().split("T")[0];
-  document.getElementById("rcptTenantName").innerText = room.tenant || "Penghuni";
-  document.getElementById("rcptUnitNumber").innerText = room.number;
-  document.getElementById("rcptTotalPaid").innerText = formatRupiah(room.price);
-  document.getElementById("rcptPropName").innerText = (state.session && state.session.property_name) ? state.session.property_name : "GRAHA MELATI BATAM";
-  document.getElementById("rcptOwnerSign").innerText = `( ${(state.session && state.session.name) ? state.session.name : 'Pengelola'} )`;
-
-  document.getElementById("rcptTableItems").innerHTML = `
-    <tr>
-      <td class="py-2 text-slate-700">Sewa Kamar (${room.type})</td>
-      <td class="py-2 text-right font-mono font-bold">${formatRupiah(room.price)}</td>
-    </tr>
-    <tr>
-      <td class="py-2 text-slate-700">Iuran Fasilitas & Air</td>
-      <td class="py-2 text-right font-mono font-bold">Termasuk</td>
-    </tr>
-  `;
-
-  navigateTo(`/kwitansi?token=${room.id}`);
-}
-
-async function loadPublicReceipt(token) {
-  try {
-    const res = await fetch(`${GAS_API_URL}?action=getPublicReceipt&token=${token}`);
-    const json = await res.json();
-    if (json.status === "success") {
-      document.getElementById("rcptInvId").innerText = json.data.invoiceId;
-      document.getElementById("rcptTotalPaid").innerText = formatRupiah(json.data.total);
-      document.getElementById("rcptPaidDate").innerText = json.data.dueDate || "-";
-      document.getElementById("rcptTableItems").innerHTML = `
-        <tr>
-          <td class="py-2 text-slate-700">Sewa Periode: ${json.data.period}</td>
-          <td class="py-2 text-right font-mono font-bold">${formatRupiah(json.data.total)}</td>
-        </tr>
-      `;
-    }
-  } catch (e) {
-    console.error("Gagal load kwitansi:", e);
-  }
-}
-
-// ==================== INTERACTIVE UI HELPERS ====================
-function toggleFeatureComparison() {
-  const tbl = document.getElementById("featureComparisonTable");
-  const txt = document.getElementById("btnToggleCompareText");
-  if (tbl.classList.contains("hidden")) {
-    tbl.classList.remove("hidden");
-    txt.innerText = "Sembunyikan Perbandingan Fitur";
-  } else {
-    tbl.classList.add("hidden");
-    txt.innerText = "Bandingkan Fitur Lengkap";
-  }
-}
-
-function toggleFaq(num) {
-  const ans = document.getElementById(`faq-ans-${num}`);
-  const icon = document.getElementById(`faq-icon-${num}`);
-  if (ans.classList.contains("hidden")) {
-    ans.classList.remove("hidden");
-    icon.innerText = "−";
-  } else {
-    ans.classList.add("hidden");
-    icon.innerText = "+";
-  }
-}
-
-function setRoomFilter(filterType) {
-  state.activeFilter = filterType;
-  ["ALL", "OCCUPIED", "OVERDUE", "VACANT"].forEach(type => {
-    const el = document.getElementById(`filter-pill-${type}`);
-    if (el) {
-      el.className = (type === filterType)
-        ? "px-3.5 py-1.5 rounded-full bg-brand-600 text-white shrink-0 transition-colors"
-        : "px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition-colors";
-    }
-  });
-  renderRoomMatrix();
-}
-
-function filterRooms() {
-  state.searchKeyword = document.getElementById("searchRoomInput").value.toLowerCase();
-  renderRoomMatrix();
-}
-
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove("hidden");
-}
-
-function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add("hidden");
-}
-
-let toastTimeout = null;
-
-function showToast(message, type = "info", title = "") {
-  const toast = document.getElementById("toastNotification");
-  const titleEl = document.getElementById("toastTitle");
-  const msgEl = document.getElementById("toastMessage");
-  const iconEl = document.getElementById("toastIcon");
-  const iconBadge = document.getElementById("toastIconBadge");
-  const bar = document.getElementById("toastProgressBar");
-
-  if (!toast) return;
-
-  if (toastTimeout) clearTimeout(toastTimeout);
-
-  if (msgEl) msgEl.innerText = message;
-  
-  const defaultTitles = {
-    success: "Berhasil!",
-    error: "Terjadi Kesalahan",
-    warning: "Peringatan",
-    info: "Informasi Sistem"
-  };
-
-  if (titleEl) titleEl.innerText = title || defaultTitles[type] || "Notifikasi";
-
-  if (iconEl) {
-    iconEl.innerText = type === "success" ? "✓" : (type === "error" ? "✕" : (type === "warning" ? "⚠️" : "ℹ️"));
-  }
-
-  if (iconBadge) {
-    if (type === "success") {
-      iconBadge.className = "w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-sm font-black shrink-0";
-    } else if (type === "error") {
-      iconBadge.className = "w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center text-sm font-black shrink-0";
-    } else if (type === "warning") {
-      iconBadge.className = "w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-sm font-black shrink-0";
-    } else {
-      iconBadge.className = "w-9 h-9 rounded-xl bg-brand-500/20 text-brand-400 border border-brand-500/40 flex items-center justify-center text-sm font-black shrink-0";
-    }
-  }
-
-  if (bar) {
-    bar.className = (type === "success") ? "bg-emerald-500 h-full w-full" : ((type === "error") ? "bg-rose-500 h-full w-full" : ((type === "warning") ? "bg-amber-500 h-full w-full" : "bg-brand-500 h-full w-full"));
-    bar.classList.remove("toast-progress-active");
-    void bar.offsetWidth; // trigger reflow
-    bar.classList.add("toast-progress-active");
-  }
-
-  toast.classList.remove("translate-y-[-120px]", "opacity-0");
-  toast.classList.add("translate-y-0", "opacity-100");
-
-  toastTimeout = setTimeout(() => {
-    hideToastNow();
-  }, 3500);
-}
-
-function hideToastNow() {
-  const toast = document.getElementById("toastNotification");
-  const bar = document.getElementById("toastProgressBar");
-  if (toast) {
-    toast.classList.add("translate-y-[-120px]", "opacity-0");
-    toast.classList.remove("translate-y-0", "opacity-100");
-  }
-  if (bar) bar.classList.remove("toast-progress-active");
-  if (toastTimeout) clearTimeout(toastTimeout);
-}
-
-function formatRupiah(num) {
-  return "Rp " + Number(num || 0).toLocaleString("id-ID");
-}
-// =============================================================================
-// ENHANCEMENTS: MASTER CONFIG, DUMMY DATASET, NOTIFICATIONS, EXPORTS, AND CRUD
-// =============================================================================
-
-// Standard Indonesian Date Formatter DD-MM-YYYY (Contoh: 25-12-2026)
-function formatDateDMY(dateInput) {
-  if (!dateInput) return "-";
-  try {
-    let d;
-    if (typeof dateInput === "string" && dateInput.includes("-")) {
-      const parts = dateInput.split("-");
-      if (parts.length === 3) {
-        if (parts[0].length === 4) {
-          // YYYY-MM-DD
-          return `${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}-${parts[0]}`;
-        } else if (parts[2].length === 4) {
-          // Already DD-MM-YYYY
-          return dateInput;
-        }
-      }
-    }
-    d = new Date(dateInput);
-    if (isNaN(d.getTime())) return String(dateInput);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  } catch (e) {
-    return String(dateInput);
-  }
-}
-
-// ==================== MASTER PANEL CONFIGURATION ====================
-function initMasterConfig() {
-  const defaultMaster = {
-    siteTitle: "KostHub OS - Sistem Operasi Manajemen Kost Otomatis",
-    siteSlogan: "Smart Multi-Tenant Cloud Operating System",
-    siteFooter: "KostHub OS. Hak Cipta Dilindungi Undang-Undang.",
-    maintenance: {
-      enabled: false,
-      mode: "indefinite", // "indefinite" | "scheduled"
-      until: "2026-12-31T23:59",
-      message: "Sistem sedang dalam peningkatan performa rutin server KostHub OS. Layanan akan segera online kembali dalam beberapa menit."
-    },
-    changelogMd: `# KostHub OS - Riwayat Rilis & Update Sistem
-
-### Versi 2.4.0 (10-10-2026)
-- **Super Admin**: Export PDF & Excel modern untuk Manage Users & Verifikasi Pembayaran.
-- **Super Admin**: Master Panel untuk Identitas & Branding, Maintenance Mode, dan Changelog Editor.
-- **Owner Dashboard**: Omzet bulan berjalan real-time dinamis berdasarkan okupansi dan status bayar.
-- **Owner**: Peluncuran kwitansi digital modern ikonik dengan fitur download PDF & cetak otomatis.
-- **Owner**: Pilihan fasilitas kost terlengkap dengan fitur penambahan fasilitas kustom dinamis.
-- **Penghuni & Kamar**: Integrasi filter, pencarian langsung, paginasi, dan aksi CRUD komprehensif.
-- **Buku Kas**: Filter pengeluaran per kamar dan penanda perbaikan khusus kamar.
-- **Global**: Notifikasi multi-role (Super Admin, Owner, Staf) dan standarisasi format tanggal DD-MM-YYYY.`
-  };
-
-  try {
-    const saved = localStorage.getItem("kosthub_master_config");
-    state.masterConfig = saved ? JSON.parse(saved) : defaultMaster;
-  } catch (e) {
-    state.masterConfig = defaultMaster;
-  }
-
-  applyMasterBranding();
-  renderMasterPanelSettings();
-}
-
-function applyMasterBranding() {
-  if (!state.masterConfig) return;
-  if (state.masterConfig.siteTitle) {
-    document.title = state.masterConfig.siteTitle;
-  }
-  // Cek jika mode pemeliharaan aktif untuk user non-super-admin
-  if (state.masterConfig.maintenance && state.masterConfig.maintenance.enabled) {
-    const isSuperAdmin = state.session && state.session.role === "SUPER_ADMIN";
-    if (!isSuperAdmin) {
-      console.warn("Sistem KostHub OS dalam Mode Pemeliharaan:", state.masterConfig.maintenance.message);
-    }
-  }
-}
-
-function renderMasterPanelSettings() {
-  const cfg = state.masterConfig;
-  if (!cfg) return;
-
-  const titleEl = document.getElementById("masterSiteTitle");
-  const sloganEl = document.getElementById("masterSiteSlogan");
-  const footerEl = document.getElementById("masterSiteFooter");
-  const toggleEl = document.getElementById("masterMaintenanceToggle");
-  const labelEl = document.getElementById("masterMaintenanceLabel");
-  const optEl = document.getElementById("masterMaintenanceOptions");
-  const dateFieldEl = document.getElementById("masterMaintDateField");
-  const untilEl = document.getElementById("masterMaintUntil");
-  const msgEl = document.getElementById("masterMaintMessage");
-  const mdEl = document.getElementById("masterChangelogMd");
-
-  if (titleEl) titleEl.value = cfg.siteTitle || "";
-  if (sloganEl) sloganEl.value = cfg.siteSlogan || "";
-  if (footerEl) footerEl.value = cfg.siteFooter || "";
-  if (msgEl) msgEl.value = (cfg.maintenance && cfg.maintenance.message) || "";
-  if (mdEl) mdEl.value = cfg.changelogMd || "";
-
-  if (toggleEl) {
-    toggleEl.checked = !!(cfg.maintenance && cfg.maintenance.enabled);
-    if (labelEl) {
-      labelEl.innerText = toggleEl.checked ? "Mode Pemeliharaan AKTIF" : "Mode Pemeliharaan NONAKTIF";
-      labelEl.className = toggleEl.checked ? "text-xs font-black text-rose-600" : "text-xs font-black text-slate-500";
-    }
-    if (optEl) {
-      if (toggleEl.checked) optEl.classList.remove("hidden");
-      else optEl.classList.add("hidden");
-    }
-  }
-
-  if (cfg.maintenance) {
-    const mode = cfg.maintenance.mode || "indefinite";
-    const rad = document.querySelector(`input[name="masterMaintMode"][value="${mode}"]`);
-    if (rad) rad.checked = true;
-
-    if (dateFieldEl) {
-      if (mode === "scheduled") dateFieldEl.classList.remove("hidden");
-      else dateFieldEl.classList.add("hidden");
-    }
-    if (untilEl && cfg.maintenance.until) {
-      untilEl.value = cfg.maintenance.until;
-    }
-  }
-}
-
-function toggleMaintenanceModeUI(checked) {
-  const labelEl = document.getElementById("masterMaintenanceLabel");
-  const optEl = document.getElementById("masterMaintenanceOptions");
-  if (labelEl) {
-    labelEl.innerText = checked ? "Mode Pemeliharaan AKTIF" : "Mode Pemeliharaan NONAKTIF";
-    labelEl.className = checked ? "text-xs font-black text-rose-600" : "text-xs font-black text-slate-500";
-  }
-  if (optEl) {
-    if (checked) optEl.classList.remove("hidden");
-    else optEl.classList.add("hidden");
-  }
-}
-
-function toggleMaintDateFields() {
-  const selMode = document.querySelector('input[name="masterMaintMode"]:checked')?.value || "indefinite";
-  const dateField = document.getElementById("masterMaintDateField");
-  if (dateField) {
-    if (selMode === "scheduled") dateField.classList.remove("hidden");
-    else dateField.classList.add("hidden");
-  }
-}
-
-function saveMasterPanelSettings() {
-  const titleEl = document.getElementById("masterSiteTitle");
-  const sloganEl = document.getElementById("masterSiteSlogan");
-  const footerEl = document.getElementById("masterSiteFooter");
-  const toggleEl = document.getElementById("masterMaintenanceToggle");
-  const modeVal = document.querySelector('input[name="masterMaintMode"]:checked')?.value || "indefinite";
-  const untilEl = document.getElementById("masterMaintUntil");
-  const msgEl = document.getElementById("masterMaintMessage");
-  const mdEl = document.getElementById("masterChangelogMd");
-
-  state.masterConfig = {
-    siteTitle: titleEl ? titleEl.value.trim() : "KostHub OS",
-    siteSlogan: sloganEl ? sloganEl.value.trim() : "Smart Multi-Tenant Cloud Operating System",
-    siteFooter: footerEl ? footerEl.value.trim() : "KostHub OS. Hak Cipta Dilindungi.",
-    maintenance: {
-      enabled: toggleEl ? toggleEl.checked : false,
-      mode: modeVal,
-      until: untilEl ? untilEl.value : "",
-      message: msgEl ? msgEl.value.trim() : "Sistem dalam pemeliharaan rutin."
-    },
-    changelogMd: mdEl ? mdEl.value : ""
-  };
-
-  localStorage.setItem("kosthub_master_config", JSON.stringify(state.masterConfig));
-  applyMasterBranding();
-  showToast("Pengaturan Master Panel & Identitas Berhasil Disimpan!", "success");
-}
-
-function previewChangelogModal() {
-  const mdText = document.getElementById("masterChangelogMd")?.value || (state.masterConfig && state.masterConfig.changelogMd) || "";
-  const renderedContainer = document.getElementById("changelogRenderedView");
-
-  if (renderedContainer) {
-    // Simple modern markdown renderer for headings, lists, bold, and hr
-    let html = mdText
-      .replace(/^### (.*$)/gim, '<h3 class="text-base font-black text-slate-800 mt-4 mb-2 flex items-center gap-1.5"><span class="text-brand-600">●</span> $1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-lg font-black text-slate-900 mt-5 mb-2.5 pb-1 border-b border-slate-100">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-xl font-black text-brand-600 mt-2 mb-3 pb-2 border-b-2 border-brand-100">$1</h1>')
-      .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-extrabold text-slate-900">$1</strong>')
-      .replace(/\*(.*?)\*/gim, '<em class="italic text-slate-700">$1</em>')
-      .replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc text-slate-600 py-0.5">$1</li>')
-      .replace(/\n$/gim, '<br />');
-
-    renderedContainer.innerHTML = `<div class="prose prose-sm max-w-none space-y-2">${html}</div>`;
-  }
-  openModal("modalChangelogPreview");
-}
-
-function saveChangelogContent() {
-  saveMasterPanelSettings();
-}
-
-// ==================== DUMMY DATASET SIMULATION ====================
-function initOverallDummyDataset() {
-  // 1. Kamar & Unit Default Dummy
-  if (!state.rooms || state.rooms.length === 0) {
-    const savedRooms = localStorage.getItem("kosthub_dummy_rooms");
-    if (savedRooms) {
-      try { state.rooms = JSON.parse(savedRooms); } catch(e) {}
-    }
-  }
-
-  if (!state.rooms || state.rooms.length === 0) {
-    state.rooms = [
-      { id: "RM-101", number: "101", floor: 1, type: "Standard Single", price: 1200000, meter: 145, status: "OCCUPIED", tenant: "Dimas Pratama", phone: "081298765432", dueDate: "25-10-2026", facilities: ["AC", "WiFi Cepat", "Kamar Mandi Dalam", "Kasur Springbed"] },
-      { id: "RM-102", number: "102", floor: 1, type: "Standard Single", price: 1200000, meter: 180, status: "VACANT", tenant: "-", phone: "-", dueDate: "-", facilities: ["AC", "WiFi Cepat", "Kamar Mandi Dalam"] },
-      { id: "RM-103", number: "103", floor: 1, type: "Deluxe Balcony", price: 1750000, meter: 210, status: "OCCUPIED", tenant: "Siti Rahmawati", phone: "081345678901", dueDate: "28-10-2026", facilities: ["AC", "WiFi Cepat", "Water Heater", "Balkon Pribadi", "Smart TV"] },
-      { id: "RM-201", number: "201", floor: 2, type: "Deluxe Queen", price: 1600000, meter: 312, status: "OCCUPIED", tenant: "Budi Santoso", phone: "082187654321", dueDate: "05-11-2026", facilities: ["AC", "WiFi Cepat", "Kamar Mandi Dalam", "Meja Kerja"] },
-      { id: "RM-202", number: "202", floor: 2, type: "Standard Single", price: 1200000, meter: 95, status: "VACANT", tenant: "-", phone: "-", dueDate: "-", facilities: ["AC", "WiFi Cepat", "Lemari Pakaian"] },
-      { id: "RM-203", number: "203", floor: 2, type: "VIP Studio", price: 2100000, meter: 410, status: "OCCUPIED", tenant: "dr. Hendra Wijaya", phone: "081912345678", dueDate: "15-11-2026", facilities: ["AC", "WiFi Cepat", "Kulkas Mini", "Water Heater", "Dapur Pribadi"] }
-    ];
-    saveDummyState();
-  }
-
-  // 2. Dummy Tenants
-  const savedTenants = localStorage.getItem("kosthub_dummy_tenants");
-  if (savedTenants) {
-    try { state.dummyTenants = JSON.parse(savedTenants); } catch(e) {}
-  }
-  if (!state.dummyTenants || state.dummyTenants.length === 0) {
-    state.dummyTenants = [
-      { id: "TNT-001", roomNumber: "101", name: "Dimas Pratama", phone: "081298765432", emergency: "081200000001", startDate: "2026-01-15", deposit: 500000, rent: 1200000, status: "ACTIVE", ktp: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150" },
-      { id: "TNT-002", roomNumber: "103", name: "Siti Rahmawati", phone: "081345678901", emergency: "081300000002", startDate: "2026-03-01", deposit: 600000, rent: 1750000, status: "ACTIVE", ktp: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" },
-      { id: "TNT-003", roomNumber: "201", name: "Budi Santoso", phone: "082187654321", emergency: "082100000003", startDate: "2026-05-10", deposit: 500000, rent: 1600000, status: "ACTIVE", ktp: "" },
-      { id: "TNT-004", roomNumber: "203", name: "dr. Hendra Wijaya", phone: "081912345678", emergency: "081900000004", startDate: "2026-06-20", deposit: 1000000, rent: 2100000, status: "ACTIVE", ktp: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" }
-    ];
-    localStorage.setItem("kosthub_dummy_tenants", JSON.stringify(state.dummyTenants));
-  }
-
-  // 3. Dummy Invoices
-  const savedInvoices = localStorage.getItem("kosthub_dummy_invoices");
-  if (savedInvoices) {
-    try { state.dummyInvoices = JSON.parse(savedInvoices); } catch(e) {}
-  }
-  if (!state.dummyInvoices || state.dummyInvoices.length === 0) {
-    state.dummyInvoices = [
-      { id: "INV-202610-001", token: "tok_101_okt26", roomNumber: "101", tenantName: "Dimas Pratama", period: "Oktober 2026", dueDate: "2026-10-25", baseRent: 1200000, electricCost: 65000, total: 1265000, status: "PAID", tokenListrikMandiri: false },
-      { id: "INV-202610-002", token: "tok_103_okt26", roomNumber: "103", tenantName: "Siti Rahmawati", period: "Oktober 2026", dueDate: "2026-10-28", baseRent: 1750000, electricCost: 0, total: 1750000, status: "PAID", tokenListrikMandiri: true },
-      { id: "INV-202610-003", token: "tok_201_okt26", roomNumber: "201", tenantName: "Budi Santoso", period: "Oktober 2026", dueDate: "2026-11-05", baseRent: 1600000, electricCost: 85000, total: 1685000, status: "PENDING", tokenListrikMandiri: false },
-      { id: "INV-202610-004", token: "tok_203_okt26", roomNumber: "203", tenantName: "dr. Hendra Wijaya", period: "Oktober 2026", dueDate: "2026-11-15", baseRent: 2100000, electricCost: 120000, total: 2220000, status: "PAID", tokenListrikMandiri: false }
-    ];
-    localStorage.setItem("kosthub_dummy_invoices", JSON.stringify(state.dummyInvoices));
-  }
-
-  // 4. Dummy Expenses
-  const savedExpenses = localStorage.getItem("kosthub_dummy_expenses");
-  if (savedExpenses) {
-    try { state.dummyExpenses = JSON.parse(savedExpenses); } catch(e) {}
-  }
-  if (!state.dummyExpenses || state.dummyExpenses.length === 0) {
-    state.dummyExpenses = [
-      { id: "EXP-001", date: "2026-10-02", category: "MAINTENANCE", description: "Perbaikan pipa kran bocor", room: "101", month: "Oktober", year: "2026", amount: 150000 },
-      { id: "EXP-002", date: "2026-10-05", category: "UTILITY", description: "Tagihan Internet Wi-Fi Induk Fiber 100Mbps", room: "Semua Unit", month: "Oktober", year: "2026", amount: 450000 },
-      { id: "EXP-003", date: "2026-10-08", category: "SUPPLIES", description: "Beli sabun pel, kamper, dan trash bag lantai 1-2", room: "Semua Unit", month: "Oktober", year: "2026", amount: 85000 },
-      { id: "EXP-004", date: "2026-10-12", category: "MAINTENANCE", description: "Ganti remote AC dan servis cuci AC kamar 103", room: "103", month: "Oktober", year: "2026", amount: 220000 }
-    ];
-    localStorage.setItem("kosthub_dummy_expenses", JSON.stringify(state.dummyExpenses));
-  }
-
-  // 5. Dummy Staff
-  const savedStaff = localStorage.getItem("kosthub_dummy_staff");
-  if (savedStaff) {
-    try { state.dummyStaff = JSON.parse(savedStaff); } catch(e) {}
-  }
-  if (!state.dummyStaff || state.dummyStaff.length === 0) {
-    state.dummyStaff = [
-      { id: "STF-01", name: "Ahmad Fauzi", phone: "085211223344", status: "AKTIF", pin: "1234" },
-      { id: "STF-02", name: "Joko Supriyanto", phone: "087799887766", status: "AKTIF", pin: "5678" }
-    ];
-    localStorage.setItem("kosthub_dummy_staff", JSON.stringify(state.dummyStaff));
-  }
-
-  // 6. Super Admin Tenants & Pending Payments
-  if (!state.adminTenants || state.adminTenants.length === 0) {
-    state.adminTenants = [
-      { ownerId: "OWN-001", propertyName: "Graha Melati Batam", ownerName: "Haji Ruslan Efendi", phone: "081277665544", tier: "PRO", unitCount: 18, quota: 25, status: "ACTIVE", registeredDate: "2026-08-10" },
-      { ownerId: "OWN-002", propertyName: "Kost Putri Kartini", ownerName: "Ibu Kartini", phone: "081388776655", tier: "STARTER", unitCount: 5, quota: 5, status: "ACTIVE", registeredDate: "2026-08-25" },
-      { ownerId: "OWN-003", propertyName: "Dormitory Harmoni Kemang", ownerName: "Agus Pratama", phone: "081122334455", tier: "ENTERPRISE", unitCount: 42, quota: 100, status: "ACTIVE", registeredDate: "2026-09-02" },
-      { ownerId: "OWN-004", propertyName: "Kost Eksklusif Dago", ownerName: "Rian Firmansyah", phone: "085611223344", tier: "PRO", unitCount: 12, quota: 25, status: "INACTIVE", registeredDate: "2026-09-18" },
-      { ownerId: "OWN-005", propertyName: "Wisma Cendrawasih Jogja", ownerName: "Dra. Sri Wahyuni", phone: "081722334455", tier: "STARTER", unitCount: 4, quota: 5, status: "ACTIVE", registeredDate: "2026-10-01" }
-    ];
-  }
-
-  if (!state.adminPendingList || state.adminPendingList.length === 0) {
-    state.adminPendingList = [
-      { ownerId: "REG-901", propertyName: "Kost Mahasiswa Surya Kencana", ownerName: "Bambang Pamungkas", phone: "081299887711", tier: "PRO", price: 99000, proofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=150", registeredDate: "2026-10-09" },
-      { ownerId: "REG-902", propertyName: "Pavilion Green Residence", ownerName: "Clara Agustina", phone: "081377889922", tier: "ENTERPRISE", price: 199000, proofUrl: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=150", registeredDate: "2026-10-10" },
-      { ownerId: "REG-903", propertyName: "Kost Singgah Tenang Malang", ownerName: "David Kurniawan", phone: "085711334455", tier: "STARTER", price: 49000, proofUrl: "", registeredDate: "2026-10-10" }
-    ];
-  }
-
-  // Inisialisasi Bank Platform Default jika belum ada
-  if (!state.platformBanks || state.platformBanks.length === 0) {
-    const savedBanks = localStorage.getItem("kosthub_platform_banks");
-    if (savedBanks) {
-      try { state.platformBanks = JSON.parse(savedBanks); } catch(e) {}
-    } else {
-      state.platformBanks = [
-        { code: "BCA", name: "Bank Central Asia (BCA)", account: "8009182736", holder: "PT KOSTHUB TEKNOLOGI INDONESIA" },
-        { code: "MANDIRI", name: "Bank Mandiri", account: "1370019283746", holder: "PT KOSTHUB TEKNOLOGI INDONESIA" },
-        { code: "BRI", name: "Bank Rakyat Indonesia (BRI)", account: "034101002938531", holder: "PT KOSTHUB TEKNOLOGI INDONESIA" }
-      ];
-      localStorage.setItem("kosthub_platform_banks", JSON.stringify(state.platformBanks));
-    }
-  }
-
-  // Muat Fasilitas Kustom
-  const savedFacs = localStorage.getItem("kosthub_custom_facilities");
-  if (savedFacs) {
-    try { state.customFacilities = JSON.parse(savedFacs); } catch(e) {}
-  }
-}
-
-function saveDummyState() {
-  localStorage.setItem("kosthub_dummy_rooms", JSON.stringify(state.rooms));
-  if (state.dummyTenants) localStorage.setItem("kosthub_dummy_tenants", JSON.stringify(state.dummyTenants));
-  if (state.dummyInvoices) localStorage.setItem("kosthub_dummy_invoices", JSON.stringify(state.dummyInvoices));
-  if (state.dummyExpenses) localStorage.setItem("kosthub_dummy_expenses", JSON.stringify(state.dummyExpenses));
-  if (state.dummyStaff) localStorage.setItem("kosthub_dummy_staff", JSON.stringify(state.dummyStaff));
-}
-
-// Reset Data Kamar ke Default / Kosongkan Okupansi
-async function resetAllRoomsData() {
-  const confirmed = await showCustomConfirm({
-    title: "Reset Semua Data Kamar?",
-    message: "Tindakan ini akan mengosongkan status okupansi seluruh kamar kost menjadi <b>VACANT</b> (KOSONG) dan mereset stand meteran listrik. Gunakan fitur ini untuk simulasi awal tahun/bulan.",
-    confirmText: "Ya, Reset Kamar",
-    cancelText: "Batal",
-    type: "danger",
-    icon: "🔄"
-  });
-
-  if (!confirmed) return;
-
-  state.rooms.forEach(r => {
-    r.status = "VACANT";
-    r.tenant = "-";
-    r.phone = "-";
-    r.dueDate = "-";
-  });
-
-  saveDummyState();
-  updateDashboardUI();
-  renderRoomMatrix(state.rooms);
-  populateRoomSelectDropdowns();
-  showToast("Seluruh status kamar berhasil direset ke status KOSONG!", "success");
-}
-
-// ==================== ROLE-BASED NOTIFICATIONS ====================
-function toggleRoleNotificationDropdown() {
-  const dropdown = document.getElementById("roleNotificationDropdown");
-  if (!dropdown) return;
-  dropdown.classList.toggle("hidden");
-  renderRoleNotificationsList();
-}
-
-function updateRoleNotificationBadge() {
-  const badge = document.getElementById("roleNotificationBadge");
-  if (!badge) return;
-
-  const currentRole = state.session ? state.session.role : "GUEST";
-  const notifs = getNotificationsForRole(currentRole);
-  const unreadCount = notifs.filter(n => !n.read).length;
-
-  if (unreadCount > 0) {
-    badge.innerText = unreadCount > 9 ? "9+" : unreadCount;
-    badge.classList.remove("hidden");
-  } else {
-    badge.classList.add("hidden");
-  }
-}
-
-function getNotificationsForRole(role) {
-  if (state.roleNotifications && state.roleNotifications[role]) {
-    return state.roleNotifications[role];
-  }
-
-  const defaultNotifications = {
-    SUPER_ADMIN: [
-      { id: "notif-sa-1", title: "Verifikasi Pembayaran Baru", desc: "Pavilion Green Residence mengupload bukti bayar paket ENTERPRISE Rp 199.000.", time: "10 menit yang lalu", read: false, icon: "💳" },
-      { id: "notif-sa-2", title: "Pendaftaran Akun Baru", desc: "Kost Singgah Tenang Malang mendaftar paket STARTER.", time: "1 jam yang lalu", read: false, icon: "🏢" },
-      { id: "notif-sa-3", title: "Sistem Backup Otomatis", desc: "Snapshot database harian berhasil disimpan aman.", time: "04:00 Subuh", read: true, icon: "🛡️" }
-    ],
-    OWNER: [
-      { id: "notif-ow-1", title: "Pelunasan Sewa Diterima", desc: "Dimas Pratama (Kamar 101) telah melunasi sewa Rp 1.265.000.", time: "15 menit yang lalu", read: false, icon: "💰" },
-      { id: "notif-ow-2", title: "Jatuh Tempo Mendekat", desc: "Tagihan Kamar 201 (Budi Santoso) jatuh tempo dalam 3 hari.", time: "2 jam yang lalu", read: false, icon: "⏰" },
-      { id: "notif-ow-3", title: "Meteran Listrik Diupdate", desc: "Staf Ahmad Fauzi telah mencatat stand meter lantai 1.", time: "Kemarin", read: true, icon: "⚡" }
-    ],
-    STAFF: [
-      { id: "notif-st-1", title: "Tugas Cek Meteran", desc: "Jadwal pencatatan meteran listrik akhir bulan unit lantai 1 & 2.", time: "Hari ini", read: false, icon: "⚡" },
-      { id: "notif-st-2", title: "Perbaikan Kamar 103", desc: "Penghuni melaporkan servis remote AC kamar 103 telah selesai.", time: "Kemarin", read: true, icon: "🔧" }
-    ]
-  };
-
-  if (!state.roleNotifications) state.roleNotifications = {};
-  state.roleNotifications[role] = defaultNotifications[role] || [];
-  return state.roleNotifications[role];
-}
-
-function renderRoleNotificationsList() {
-  const listContainer = document.getElementById("roleNotificationList");
-  const titleRoleEl = document.getElementById("roleNotificationTitleRole");
-  if (!listContainer) return;
-
-  const currentRole = state.session ? state.session.role : "OWNER";
-  if (titleRoleEl) {
-    titleRoleEl.innerText = currentRole === "SUPER_ADMIN" ? "SUPER ADMIN" : (currentRole === "STAFF" ? "STAF LAPANGAN" : "OWNER KOST");
-  }
-
-  const notifs = getNotificationsForRole(currentRole);
-
-  if (notifs.length === 0) {
-    listContainer.innerHTML = '<div class="py-8 text-center text-xs text-slate-400 font-semibold">Tidak ada pemberitahuan baru</div>';
-    return;
-  }
-
-  listContainer.innerHTML = notifs.map(n => `
-    <div class="p-3.5 hover:bg-slate-50 transition-colors flex items-start gap-3 border-b border-slate-100 last:border-b-0 ${!n.read ? 'bg-brand-50/20' : ''}">
-      <span class="text-xl shrink-0 p-1.5 rounded-xl bg-slate-100">${n.icon || '🔔'}</span>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center justify-between gap-2">
-          <h5 class="text-xs font-black text-slate-900 truncate">${n.title}</h5>
-          ${!n.read ? '<span class="w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>' : ''}
-        </div>
-        <p class="text-[11px] text-slate-600 mt-0.5 leading-snug line-clamp-2">${n.desc}</p>
-        <span class="text-[10px] font-mono text-slate-400 mt-1 block">${n.time}</span>
-      </div>
-    </div>
-  `).join("");
-}
-
-function markAllNotificationsRead() {
-  const currentRole = state.session ? state.session.role : "GUEST";
-  const notifs = getNotificationsForRole(currentRole);
-  notifs.forEach(n => n.read = true);
-  updateRoleNotificationBadge();
-  renderRoleNotificationsList();
-  showToast("Semua pemberitahuan ditandai telah dibaca", "success");
-}
-
-// Close notification dropdown when clicking outside
-document.addEventListener("click", (e) => {
-  const btn = document.getElementById("btnRoleNotification");
-  const dropdown = document.getElementById("roleNotificationDropdown");
-  if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
-    dropdown.classList.add("hidden");
-  }
-});
-
-// ==================== EXPORT PDF & EXCEL SUPER_ADMIN ====================
-function getAdminFilteredTenants() {
-  const search = (document.getElementById("admSearchOwnerInput")?.value || "").toLowerCase().trim();
-  const statusFilter = document.getElementById("admFilterStatusSelect")?.value || "ALL";
-  const tierFilter = document.getElementById("admFilterTierSelect")?.value || "ALL";
-  const startDate = document.getElementById("admFilterStartDate")?.value || "";
-  const endDate = document.getElementById("admFilterEndDate")?.value || "";
-
-  const allTenants = state.adminTenants || [];
-  return allTenants.filter(t => {
-    const matchesSearch = !search ||
-      (t.ownerId || "").toLowerCase().includes(search) ||
-      (t.propertyName || "").toLowerCase().includes(search) ||
-      (t.ownerName || "").toLowerCase().includes(search) ||
-      (t.phone || "").toLowerCase().includes(search);
-
-    const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
-    const matchesTier = tierFilter === "ALL" || t.tier === tierFilter;
-
-    let matchesDate = true;
-    if (startDate && t.registeredDate) {
-      matchesDate = matchesDate && (t.registeredDate >= startDate);
-    }
-    if (endDate && t.registeredDate) {
-      matchesDate = matchesDate && (t.registeredDate <= endDate);
-    }
-
-    return matchesSearch && matchesStatus && matchesTier && matchesDate;
-  });
-}
-
-// Export PDF Manage Users (Modern Iconic Layout)
-function exportAdminUsersPDF(selectedOnly = false) {
-  let list = getAdminFilteredTenants();
-  if (selectedOnly) {
-    if (!state.adminSelectedOwnerIds || state.adminSelectedOwnerIds.size === 0) {
-      showToast("Pilih minimal satu akun owner untuk diexport!", "warning");
-      return;
-    }
-    list = list.filter(t => state.adminSelectedOwnerIds.has(t.ownerId));
-  }
-
-  if (list.length === 0) {
-    showToast("Tidak ada data owner untuk diexport PDF!", "warning");
-    return;
-  }
-
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-    // Decorative Header Banner
-    doc.setFillColor(30, 41, 59); // slate-800
-    doc.rect(0, 0, 210, 36, "F");
-
-    doc.setFillColor(79, 70, 229); // brand indigo
-    doc.rect(0, 34, 210, 2, "F");
-
-    // Title & Branding
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("KOSTHUB OS - LAPORAN KELOLA OWNER & PENGGUNA", 14, 15);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(203, 213, 225); // slate-300
-    const todayFormatted = formatDateDMY(new Date().toISOString().split("T")[0]);
-    doc.text(`Dicetak Pada: ${todayFormatted} | Total Data: ${list.length} Owner Properti`, 14, 23);
-    doc.text("Laporan Resmi Terverifikasi - Cloud Multi-Tenant System", 14, 29);
-
-    // Table Data
-    const tableHeaders = [["No", "ID Owner", "Nama Properti", "Nama Owner & WA", "Paket", "Unit / Kuota", "Status", "Tgl Registrasi"]];
-    const tableData = list.map((t, idx) => [
-      idx + 1,
-      t.ownerId || "-",
-      t.propertyName || "-",
-      `${t.ownerName || '-'}\n${t.phone || '-'}`,
-      t.tier || "STARTER",
-      `${t.unitCount || 0} / ${t.quota || 0}`,
-      t.status || "ACTIVE",
-      formatDateDMY(t.registeredDate || "-")
-    ]);
-
-    doc.autoTable({
-      head: tableHeaders,
-      body: tableData,
-      startY: 42,
-      theme: "grid",
-      styles: {
-        fontSize: 8.5,
-        cellPadding: 3,
-        valign: "middle"
-      },
-      headStyles: {
-        fillColor: [67, 56, 202], // indigo-700
-        textColor: 255,
-        fontStyle: "bold"
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252] // slate-50
-      },
-      didDrawPage: function(data) {
-        // Footer page number
-        doc.setFontSize(8);
-        doc.setTextColor(148, 163, 184);
-        doc.text(`Halaman ${doc.internal.getNumberOfPages()} - KostHub OS Automated Reporting`, 14, 290);
-      }
-    });
-
-    doc.save(`KostHub_Owner_Users_${todayFormatted}.pdf`);
-    showToast("Laporan PDF Pengguna Berhasil Diunduh!", "success");
-  } catch (err) {
-    console.error("Gagal export PDF:", err);
-    showToast("Gagal menghasilkan PDF: " + err.message, "error");
-  }
-}
-
-// Export Excel Manage Users
-function exportAdminUsersExcel(selectedOnly = false) {
-  let list = getAdminFilteredTenants();
-  if (selectedOnly) {
-    if (!state.adminSelectedOwnerIds || state.adminSelectedOwnerIds.size === 0) {
-      showToast("Pilih minimal satu akun owner untuk diexport!", "warning");
-      return;
-    }
-    list = list.filter(t => state.adminSelectedOwnerIds.has(t.ownerId));
-  }
-
-  if (list.length === 0) {
-    showToast("Tidak ada data owner untuk diexport Excel!", "warning");
-    return;
-  }
-
-  try {
-    const dataForSheet = list.map((t, idx) => ({
-      "No": idx + 1,
-      "ID Owner": t.ownerId || "",
-      "Nama Properti Kost": t.propertyName || "",
-      "Nama Pemilik": t.ownerName || "",
-      "No. WhatsApp": t.phone || "",
-      "Paket Lisensi": t.tier || "STARTER",
-      "Kamar Terpakai": t.unitCount || 0,
-      "Kapasitas Kuota": t.quota || 0,
-      "Status Akun": t.status || "ACTIVE",
-      "Tanggal Registrasi": formatDateDMY(t.registeredDate || "")
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataForSheet);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Daftar_Owner");
-
-    const todayFormatted = formatDateDMY(new Date().toISOString().split("T")[0]);
-    XLSX.writeFile(wb, `KostHub_Data_Owner_${todayFormatted}.xlsx`);
-    showToast("Data Excel Berhasil Diunduh!", "success");
-  } catch (err) {
-    console.error("Gagal export Excel:", err);
-    showToast("Gagal menghasilkan Excel: " + err.message, "error");
-  }
-}
-
-function bulkExportSelectedOwnersPDF() {
-  exportAdminUsersPDF(true);
-}
-
-function bulkExportSelectedOwnersExcel() {
-  exportAdminUsersExcel(true);
-}
-
-// Pagination Handlers Super Admin
-function prevAdminUsersPage() {
-  if (state.pagination.tenantsPage > 1) {
-    state.pagination.tenantsPage--;
-    renderAdminTenantTable();
-  }
-}
-
-function nextAdminUsersPage() {
-  state.pagination.tenantsPage++;
-  renderAdminTenantTable();
-}
-
-function prevAdminPendingPage() {
-  if (state.pagination.pendingPage > 1) {
-    state.pagination.pendingPage--;
-    renderAdminPendingTable();
-  }
-}
-
-function nextAdminPendingPage() {
-  state.pagination.pendingPage++;
-  renderAdminPendingTable();
-}
-
-// ==================== FASILITAS KAMAR & UNIT ====================
-const DEFAULT_FACILITIES = [
-  "AC (Air Conditioner)",
-  "Kamar Mandi Dalam",
-  "WiFi Internet Cepat",
-  "Kasur Springbed",
-  "Lemari Pakaian",
-  "Meja & Kursi Kerja",
-  "Water Heater",
-  "Smart TV",
-  "Kulkas Mini",
-  "Balkon Pribadi",
-  "Jendela Luar",
-  "Token Listrik Mandiri"
-];
-
-function renderFacilityCheckboxes(selectedFacs = []) {
-  const container = document.getElementById("facilityCheckboxesGrid");
-  if (!container) return;
-
-  const allFacs = Array.from(new Set([...DEFAULT_FACILITIES, ...(state.customFacilities || [])]));
-
-  container.innerHTML = allFacs.map(fac => {
-    const isChecked = selectedFacs.includes(fac);
-    return `
-      <label class="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 hover:border-brand-300 transition-all cursor-pointer text-[11px] font-semibold text-slate-700 shadow-2xs">
-        <input type="checkbox" name="unitFacilityCheck" value="${fac}" ${isChecked ? 'checked' : ''}
-          class="rounded text-brand-600 focus:ring-brand-500 w-3.5 h-3.5 cursor-pointer" />
-        <span class="truncate">${fac}</span>
-      </label>
-    `;
-  }).join("");
-}
-
-function addCustomFacility() {
-  const input = document.getElementById("customFacilityInput");
-  if (!input) return;
-  const val = input.value.trim();
-  if (!val) {
-    showToast("Tulis nama fasilitas baru terlebih dahulu!", "warning");
-    return;
-  }
-
-  if (!state.customFacilities) state.customFacilities = [];
-  if (!state.customFacilities.includes(val) && !DEFAULT_FACILITIES.includes(val)) {
-    state.customFacilities.push(val);
-    localStorage.setItem("kosthub_custom_facilities", JSON.stringify(state.customFacilities));
-  }
-
-  // Get currently checked boxes
-  const currentlyChecked = Array.from(document.querySelectorAll('input[name="unitFacilityCheck"]:checked')).map(el => el.value);
-  currentlyChecked.push(val);
-
-  renderFacilityCheckboxes(currentlyChecked);
-  input.value = "";
-  showToast(`Fasilitas "${val}" berhasil ditambahkan!`, "success");
-}
-
-function getSelectedFacilitiesFromModal() {
-  const checked = document.querySelectorAll('input[name="unitFacilityCheck"]:checked');
-  return Array.from(checked).map(c => c.value);
-}
-
-// ==================== KAMAR & UNIT CRUD & ACTIONS ====================
-function prevUnitPage() {
-  if (state.pagination.unitPage > 1) {
-    state.pagination.unitPage--;
-    renderMasterUnitsTable();
-  }
-}
-
-function nextUnitPage() {
-  state.pagination.unitPage++;
-  renderMasterUnitsTable();
-}
-
-function filterMasterUnitsTable() {
-  state.pagination.unitPage = 1;
-  renderMasterUnitsTable();
-}
-
-function renderMasterUnitsTable() {
-  const tbody = document.getElementById("unitMasterTableBody");
-  if (!tbody) return;
-
-  const search = (document.getElementById("searchUnitInput")?.value || "").toLowerCase().trim();
-  const statusFilter = document.getElementById("filterUnitStatusSelect")?.value || "ALL";
-  const floorFilter = document.getElementById("filterUnitFloorSelect")?.value || "ALL";
-
-  const allUnits = state.rooms || [];
-  const filtered = allUnits.filter(u => {
-    const num = (u.number || u[2] || "").toString().toLowerCase();
-    const type = (u.type || u[4] || "").toString().toLowerCase();
-    const status = u.status || u[7] || "VACANT";
-    const floor = (u.floor || u[3] || "1").toString();
-
-    const matchesSearch = !search || num.includes(search) || type.includes(search);
-    const matchesStatus = statusFilter === "ALL" || status === statusFilter;
-    const matchesFloor = floorFilter === "ALL" || floor === floorFilter;
-
-    return matchesSearch && matchesStatus && matchesFloor;
-  });
-
-  const perPage = state.pagination.unitPerPage || 5;
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  if (state.pagination.unitPage > totalPages) state.pagination.unitPage = totalPages;
-  if (state.pagination.unitPage < 1) state.pagination.unitPage = 1;
-
-  const startIdx = (state.pagination.unitPage - 1) * perPage;
-  const pagedUnits = filtered.slice(startIdx, startIdx + perPage);
-
-  const footerInfo = document.getElementById("unitTableFooterInfo");
-  if (footerInfo) {
-    footerInfo.innerText = `Menampilkan ${filtered.length > 0 ? startIdx + 1 : 0} - ${Math.min(startIdx + perPage, filtered.length)} dari total ${filtered.length} unit kamar`;
-  }
-
-  const pageNumEl = document.getElementById("unitPageNumber");
-  if (pageNumEl) pageNumEl.innerText = `Hal ${state.pagination.unitPage} dari ${totalPages}`;
-
-  const btnPrev = document.getElementById("btnPrevUnitPage");
-  const btnNext = document.getElementById("btnNextUnitPage");
-  if (btnPrev) btnPrev.disabled = state.pagination.unitPage <= 1;
-  if (btnNext) btnNext.disabled = state.pagination.unitPage >= totalPages;
-
-  if (pagedUnits.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" class="p-8 text-center text-slate-400">
-          <div class="flex flex-col items-center justify-center gap-1.5">
-            <span class="text-3xl">🚪</span>
-            <b class="text-slate-700">Tidak ada data unit kamar yang cocok</b>
-            <span class="text-xs text-slate-400">Silakan sesuaikan kata kunci pencarian atau filter status & lantai.</span>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = pagedUnits.map(u => {
-    const id = u.id || u[0];
-    const num = u.number || u[2];
-    const floor = u.floor || u[3];
-    const type = u.type || u[4] || "Standard";
-    const price = u.price || u[5] || 0;
-    const facs = Array.isArray(u.facilities) ? u.facilities.join(", ") : (u[6] || "-");
-    const meter = u.meter || u[9] || 0;
-    const status = u.status || u[7] || "VACANT";
-
-    const isOccupied = status === "OCCUPIED";
-    const statusBadge = isOccupied
-      ? '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TERISI</span>'
-      : '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-200">KOSONG</span>';
-
-    return `
-      <tr class="hover:bg-slate-50/80 transition-colors">
-        <td class="p-3.5 font-black text-slate-900 text-sm">
-          <span class="inline-flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full ${isOccupied ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
-            ${num}
-          </span>
-        </td>
-        <td class="p-3.5 font-semibold text-slate-700">Lantai ${floor}</td>
-        <td class="p-3.5 font-bold text-slate-800">${type}</td>
-        <td class="p-3.5 font-mono font-black text-slate-900">${formatRupiah(price)}</td>
-        <td class="p-3.5 text-slate-600 text-xs max-w-xs truncate" title="${facs}">${facs}</td>
-        <td class="p-3.5 font-mono font-bold text-slate-700">${meter} kWh</td>
-        <td class="p-3.5">${statusBadge}</td>
-        <td class="p-3.5 text-right">
-          <div class="flex items-center justify-end gap-1.5">
-            <button onclick="viewUnitDetail('${id}')" title="Lihat Detail Kamar"
-              class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold transition-all">
-              👁️
-            </button>
-            <button onclick="editUnitModal('${id}')" title="Edit Kamar"
-              class="p-1.5 hover:bg-brand-50 text-brand-600 rounded-lg text-xs font-bold transition-all">
-              ✏️
-            </button>
-            <button onclick="deleteUnit('${id}')" title="Hapus Kamar"
-              class="p-1.5 hover:bg-rose-50 text-rose-600 rounded-lg text-xs font-bold transition-all">
-              🗑️
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// Override function lama renderMasterUnits agar kompatibel
-function renderMasterUnits(units) {
-  if (units && units.length > 0) {
-    // Map array format to object format jika didapat dari backend GAS
-    state.rooms = units.map(u => ({
-      id: u[0],
-      number: u[2],
-      floor: u[3],
-      type: u[4],
-      price: u[5],
-      facilities: (u[6] || "").split(",").map(s => s.trim()).filter(Boolean),
-      status: u[7],
-      meter: u[9] || 0
-    }));
-    saveDummyState();
-  }
-  renderMasterUnitsTable();
-}
-
-function openAddUnitModal() {
-  document.getElementById("modalUnitTitle").innerText = "Tambah Unit Kamar Baru";
-  document.getElementById("unitEditId").value = "";
-  document.getElementById("unitNumberInput").value = "";
-  document.getElementById("unitFloorInput").value = "1";
-  document.getElementById("unitTypeInput").value = "Standard AC";
-  document.getElementById("unitPriceInput").value = "1500000";
-  document.getElementById("unitMeterInput").value = "0";
-  renderFacilityCheckboxes(["AC (Air Conditioner)", "WiFi Internet Cepat", "Kamar Mandi Dalam"]);
-  openModal("modalAddUnit");
-}
-
-function editUnitModal(id) {
-  const room = state.rooms.find(r => r.id === id);
-  if (!room) {
-    showToast("Data unit kamar tidak ditemukan!", "error");
-    return;
-  }
-
-  document.getElementById("modalUnitTitle").innerText = `Edit Unit Kamar ${room.number}`;
-  document.getElementById("unitEditId").value = room.id;
-  document.getElementById("unitNumberInput").value = room.number;
-  document.getElementById("unitFloorInput").value = room.floor || 1;
-  document.getElementById("unitTypeInput").value = room.type || "";
-  document.getElementById("unitPriceInput").value = room.price || 0;
-  document.getElementById("unitMeterInput").value = room.meter || 0;
-
-  const currentFacs = Array.isArray(room.facilities) ? room.facilities : (room.facilities ? String(room.facilities).split(",").map(s => s.trim()) : []);
-  renderFacilityCheckboxes(currentFacs);
-  openModal("modalAddUnit");
-}
-
-async function viewUnitDetail(id) {
-  const room = state.rooms.find(r => r.id === id);
-  if (!room) return;
-
-  const facs = Array.isArray(room.facilities) ? room.facilities.join(", ") : (room.facilities || "-");
-  await showCustomConfirm({
-    title: `Rincian Kamar ${room.number}`,
-    message: `
-      <div class="space-y-2 text-left text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-        <div><b>Lantai:</b> Lantai ${room.floor || 1}</div>
-        <div><b>Tipe Kamar:</b> ${room.type || 'Standard'}</div>
-        <div><b>Tarif Sewa Pokok:</b> ${formatRupiah(room.price)} / bulan</div>
-        <div><b>Stand Meter Listrik:</b> ${room.meter || 0} kWh</div>
-        <div><b>Status Okupansi:</b> <span class="font-bold ${room.status === 'OCCUPIED' ? 'text-emerald-600' : 'text-slate-500'}">${room.status === 'OCCUPIED' ? 'TERISI (' + (room.tenant || '-') + ')' : 'KOSONG'}</span></div>
-        <div><b>Fasilitas Lengkap:</b> <div class="mt-1 text-slate-800 font-semibold">${facs}</div></div>
-      </div>
-    `,
-    confirmText: "Tutup",
-    cancelText: "",
-    type: "info",
-    icon: "🚪"
-  });
-}
-
-async function deleteUnit(id) {
-  const room = state.rooms.find(r => r.id === id);
-  if (!room) return;
-
-  if (room.status === "OCCUPIED") {
-    showToast(`Kamar ${room.number} sedang terisi penghuni. Kosongkan unit terlebih dahulu sebelum menghapus!`, "warning");
-    return;
-  }
-
-  const confirmed = await showCustomConfirm({
-    title: `Hapus Kamar ${room.number}?`,
-    message: `Apakah Anda yakin ingin menghapus kamar <b>${room.number}</b> dari database properti kost? Tindakan ini tidak dapat dibatalkan.`,
-    confirmText: "Ya, Hapus Kamar",
-    cancelText: "Batal",
-    type: "danger",
-    icon: "🗑️"
-  });
-
-  if (!confirmed) return;
-
-  state.rooms = state.rooms.filter(r => r.id !== id);
-  saveDummyState();
-  updateDashboardUI();
-  renderRoomMatrix(state.rooms);
-  renderMasterUnitsTable();
-  populateRoomSelectDropdowns();
-  showToast(`Unit Kamar ${room.number} berhasil dihapus!`, "success");
-}
-
-// Override submitAddUnit agar mendukung Edit & Fasilitas Lengkap
-async function submitAddUnit() {
-  const editId = document.getElementById("unitEditId").value.trim();
-  const num = document.getElementById("unitNumberInput").value.trim();
-  const floor = Number(document.getElementById("unitFloorInput").value) || 1;
-  const type = document.getElementById("unitTypeInput").value.trim() || "Standard";
-  const price = Number(document.getElementById("unitPriceInput").value) || 0;
-  const meter = Number(document.getElementById("unitMeterInput").value) || 0;
-  const facilities = getSelectedFacilitiesFromModal();
-
-  if (!num || price <= 0) {
-    showToast("Nomor kamar dan harga sewa bulanan wajib diisi dengan benar!", "warning");
-    return;
-  }
-
-  if (editId) {
-    // Mode Update
-    const room = state.rooms.find(r => r.id === editId);
-    if (room) {
-      room.number = num;
-      room.floor = floor;
-      room.type = type;
-      room.price = price;
-      room.meter = meter;
-      room.facilities = facilities;
-      showToast(`Data Kamar ${num} berhasil diperbarui!`, "success");
-    }
-  } else {
-    // Mode Tambah Baru
-    const newId = "RM-" + Date.now().toString().slice(-4);
-    state.rooms.push({
-      id: newId,
-      number: num,
-      floor: floor,
-      type: type,
-      price: price,
-      meter: meter,
-      status: "VACANT",
-      tenant: "-",
-      phone: "-",
-      dueDate: "-",
-      facilities: facilities
-    });
-    showToast(`Unit Kamar ${num} baru berhasil ditambahkan!`, "success");
-  }
-
-  saveDummyState();
-  closeModal("modalAddUnit");
-  updateDashboardUI();
-  renderRoomMatrix(state.rooms);
-  renderMasterUnitsTable();
-  populateRoomSelectDropdowns();
-}
-
-// ==================== PENGHUNI CRUD & ACTIONS ====================
-function prevTenantPage() {
-  if (state.pagination.tenantPage > 1) {
-    state.pagination.tenantPage--;
-    renderMasterTenantsTable();
-  }
-}
-
-function nextTenantPage() {
-  state.pagination.tenantPage++;
-  renderMasterTenantsTable();
-}
-
-function filterMasterTenantsTable() {
-  state.pagination.tenantPage = 1;
-  renderMasterTenantsTable();
-}
-
-function renderMasterTenantsTable() {
-  const tbody = document.getElementById("tenantMasterTableBody");
-  if (!tbody) return;
-
-  const search = (document.getElementById("searchTenantInput")?.value || "").toLowerCase().trim();
-  const statusFilter = document.getElementById("filterTenantStatusSelect")?.value || "ALL";
-
-  const allTenants = state.dummyTenants || [];
-  const filtered = allTenants.filter(t => {
-    const name = (t.name || "").toLowerCase();
-    const phone = (t.phone || "").toLowerCase();
-    const room = (t.roomNumber || "").toLowerCase();
-    const status = t.status || "ACTIVE";
-
-    const matchesSearch = !search || name.includes(search) || phone.includes(search) || room.includes(search);
-    const matchesStatus = statusFilter === "ALL" || status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const perPage = state.pagination.tenantPerPage || 5;
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  if (state.pagination.tenantPage > totalPages) state.pagination.tenantPage = totalPages;
-  if (state.pagination.tenantPage < 1) state.pagination.tenantPage = 1;
-
-  const startIdx = (state.pagination.tenantPage - 1) * perPage;
-  const pagedTenants = filtered.slice(startIdx, startIdx + perPage);
-
-  const footerInfo = document.getElementById("tenantTableFooterInfo");
-  if (footerInfo) {
-    footerInfo.innerText = `Menampilkan ${filtered.length > 0 ? startIdx + 1 : 0} - ${Math.min(startIdx + perPage, filtered.length)} dari total ${filtered.length} penghuni kost`;
-  }
-
-  const pageNumEl = document.getElementById("tenantPageNumber");
-  if (pageNumEl) pageNumEl.innerText = `Hal ${state.pagination.tenantPage} dari ${totalPages}`;
-
-  const btnPrev = document.getElementById("btnPrevTenantPage");
-  const btnNext = document.getElementById("btnNextTenantPage");
-  if (btnPrev) btnPrev.disabled = state.pagination.tenantPage <= 1;
-  if (btnNext) btnNext.disabled = state.pagination.tenantPage >= totalPages;
-
-  if (pagedTenants.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" class="p-8 text-center text-slate-400">
-          <div class="flex flex-col items-center justify-center gap-1.5">
-            <span class="text-3xl">👥</span>
-            <b class="text-slate-700">Tidak ada data penghuni yang cocok</b>
-            <span class="text-xs text-slate-400">Silakan sesuaikan kata kunci pencarian atau filter status.</span>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = pagedTenants.map(t => {
-    return `
-      <tr class="hover:bg-slate-50/80 transition-colors">
-        <td class="p-3.5 font-black text-slate-900 text-sm">
-          <div class="flex items-center gap-2">
-            <span class="w-7 h-7 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-xs shrink-0">
-              ${(t.name || 'P')[0]}
-            </span>
-            <div>
-              <b class="text-slate-900 block">${t.name}</b>
-              <span class="text-[10px] text-slate-400 font-mono">ID: ${t.id}</span>
-            </div>
-          </div>
-        </td>
-        <td class="p-3.5 font-black text-brand-600 font-mono text-sm">Kamar ${t.roomNumber}</td>
-        <td class="p-3.5 font-mono text-slate-700 font-bold">${t.phone}</td>
-        <td class="p-3.5 font-mono text-slate-600 text-xs">${formatDateDMY(t.startDate)}</td>
-        <td class="p-3.5 font-mono font-black text-slate-900">${formatRupiah(t.rent)}</td>
-        <td class="p-3.5">
-          ${t.ktp ? `
-            <a href="${t.ktp}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-brand-600 shadow-2xs">
-              <span>🪪</span> KTP
-            </a>
-          ` : '<span class="text-slate-400 text-xs italic">Tanpa KTP</span>'}
-        </td>
-        <td class="p-3.5 text-right">
-          <div class="flex items-center justify-end gap-1.5">
-            <button onclick="viewTenantDetail('${t.id}')" title="Lihat Profil Penghuni"
-              class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold transition-all">
-              👁️
-            </button>
-            <button onclick="editTenantModal('${t.id}')" title="Edit Penghuni"
-              class="p-1.5 hover:bg-brand-50 text-brand-600 rounded-lg text-xs font-bold transition-all">
-              ✏️
-            </button>
-            <button onclick="deleteTenant('${t.id}')" title="Check-out / Hapus Penghuni"
-              class="p-1.5 hover:bg-rose-50 text-rose-600 rounded-lg text-xs font-bold transition-all">
-              🗑️
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// Override function lama renderMasterTenants agar kompatibel
-function renderMasterTenants(tenants) {
-  if (tenants && tenants.length > 0) {
-    state.dummyTenants = tenants.map(t => ({
-      id: t[0],
-      roomNumber: t[4],
-      name: t[2],
-      phone: t[3] || "-",
-      emergency: t[5] || "-",
-      startDate: t[6] || "",
-      deposit: t[7] || 0,
-      rent: t[8] || 0,
-      ktp: t[9] || "",
-      status: t[10] || "ACTIVE"
-    }));
-    saveDummyState();
-  }
-  renderMasterTenantsTable();
-}
-
-function openStandaloneAddTenantModal() {
-  document.getElementById("onboardRoomTitle").innerText = "Registrasi Penghuni Baru";
-  document.getElementById("tenantEditId").value = "";
-  document.getElementById("onboardUnitId").value = "";
-  document.getElementById("onboardName").value = "";
-  document.getElementById("onboardWa").value = "";
-  document.getElementById("onboardEmergency").value = "";
-  document.getElementById("onboardDeposit").value = "500000";
-  document.getElementById("onboardEntryDate").value = new Date().toISOString().split("T")[0];
-
-  const preview = document.getElementById("ktpPreviewContainer");
-  if (preview) preview.classList.add("hidden");
-
-  populateRoomSelectDropdowns();
-  openModal("modalOnboard");
-}
-
-function populateRoomSelectDropdowns() {
-  const onboardSelect = document.getElementById("onboardSelectRoom");
-  const expenseSelect = document.getElementById("expenseRoomSelect");
-  const filterExpenseSelect = document.getElementById("filterExpenseRoomSelect");
-
-  const rooms = state.rooms || [];
-
-  if (onboardSelect) {
-    onboardSelect.innerHTML = rooms.map(r => `
-      <option value="${r.id}" ${r.status === 'OCCUPIED' ? 'disabled class="text-slate-400 bg-slate-50"' : ''}>
-        Kamar ${r.number} (Lt. ${r.floor}) - ${formatRupiah(r.price)} ${r.status === 'OCCUPIED' ? '[TERISI]' : '[KOSONG]'}
-      </option>
-    `).join("");
-  }
-
-  if (expenseSelect) {
-    expenseSelect.innerHTML = rooms.map(r => `
-      <option value="${r.number}">Kamar ${r.number} (Lantai ${r.floor} - ${r.type})</option>
-    `).join("");
-  }
-
-  if (filterExpenseSelect) {
-    const currentVal = filterExpenseSelect.value || "ALL";
-    filterExpenseSelect.innerHTML = '<option value="ALL">Semua Unit Kamar & Pengeluaran</option>' +
-      rooms.map(r => `
-        <option value="${r.number}">Kamar ${r.number}</option>
-      `).join("");
-    filterExpenseSelect.value = currentVal;
-  }
-}
-
-function editTenantModal(id) {
-  const t = (state.dummyTenants || []).find(x => x.id === id);
-  if (!t) return;
-
-  document.getElementById("onboardRoomTitle").innerText = `Edit Data Penghuni: ${t.name}`;
-  document.getElementById("tenantEditId").value = t.id;
-  document.getElementById("onboardUnitId").value = t.roomNumber;
-  document.getElementById("onboardName").value = t.name;
-  document.getElementById("onboardWa").value = t.phone;
-  document.getElementById("onboardEmergency").value = t.emergency || "";
-  document.getElementById("onboardDeposit").value = t.deposit || 0;
-  document.getElementById("onboardEntryDate").value = t.startDate ? t.startDate.split("T")[0] : "";
-
-  populateRoomSelectDropdowns();
-  const selectEl = document.getElementById("onboardSelectRoom");
-  if (selectEl) {
-    const matchingRoom = state.rooms.find(r => r.number === t.roomNumber || r.id === t.roomNumber);
-    if (matchingRoom) selectEl.value = matchingRoom.id;
-  }
-
-  openModal("modalOnboard");
-}
-
-async function viewTenantDetail(id) {
-  const t = (state.dummyTenants || []).find(x => x.id === id);
-  if (!t) return;
-
-  await showCustomConfirm({
-    title: `Profil Penghuni: ${t.name}`,
-    message: `
-      <div class="space-y-2 text-left text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-        <div><b>Kamar Sewa:</b> <span class="font-black text-brand-600 text-sm">Kamar ${t.roomNumber}</span></div>
-        <div><b>Nomor WhatsApp:</b> ${t.phone}</div>
-        <div><b>Kontak Darurat:</b> ${t.emergency || '-'}</div>
-        <div><b>Mulai Sewa:</b> ${formatDateDMY(t.startDate)}</div>
-        <div><b>Tarif Sewa:</b> ${formatRupiah(t.rent)} / bulan</div>
-        <div><b>Uang Deposit:</b> ${formatRupiah(t.deposit)}</div>
-        <div><b>Status Hunian:</b> <span class="font-bold text-emerald-600">${t.status}</span></div>
-      </div>
-    `,
-    confirmText: "Tutup",
-    cancelText: "",
-    type: "info",
-    icon: "👤"
-  });
-}
-
-async function deleteTenant(id) {
-  const t = (state.dummyTenants || []).find(x => x.id === id);
-  if (!t) return;
-
-  const confirmed = await showCustomConfirm({
-    title: `Check-out / Hapus Penghuni?`,
-    message: `Konfirmasi penghentian sewa dan check-out untuk <b>${t.name}</b> (Kamar ${t.roomNumber})? Kamar akan otomatis kembali berstatus <b>VACANT</b> (KOSONG).`,
-    confirmText: "Ya, Check-out Penghuni",
-    cancelText: "Batal",
-    type: "danger",
-    icon: "🚪"
-  });
-
-  if (!confirmed) return;
-
-  state.dummyTenants = (state.dummyTenants || []).filter(x => x.id !== id);
-
-  // Update status kamar terkait menjadi VACANT
-  const room = state.rooms.find(r => r.number === t.roomNumber || r.id === t.roomNumber);
-  if (room) {
-    room.status = "VACANT";
-    room.tenant = "-";
-    room.phone = "-";
-    room.dueDate = "-";
-  }
-
-  saveDummyState();
-  updateDashboardUI();
-  renderRoomMatrix(state.rooms);
-  renderMasterTenantsTable();
-  populateRoomSelectDropdowns();
-  showToast(`Penghuni ${t.name} berhasil di-checkout dan kamar telah kosong!`, "success");
-}
-
-// Override submitOnboardingTenant agar mendukung Tambah & Edit
-async function submitOnboardingTenant() {
-  const editId = document.getElementById("tenantEditId").value.trim();
-  const name = document.getElementById("onboardName").value.trim();
-  const wa = document.getElementById("onboardWa").value.trim();
-  const emergency = document.getElementById("onboardEmergency").value.trim();
-  const deposit = Number(document.getElementById("onboardDeposit").value) || 0;
-  const entryDate = document.getElementById("onboardEntryDate").value;
-
-  const selectRoomEl = document.getElementById("onboardSelectRoom");
-  const selectedRoomId = selectRoomEl ? selectRoomEl.value : document.getElementById("onboardUnitId").value;
-  const targetRoom = state.rooms.find(r => r.id === selectedRoomId || r.number === selectedRoomId);
-
-  if (!name || !wa) {
-    showToast("Nama lengkap dan No. WhatsApp penghuni wajib diisi!", "warning");
-    return;
-  }
-
-  if (editId) {
-    // Mode Update
-    const t = (state.dummyTenants || []).find(x => x.id === editId);
-    if (t) {
-      t.name = name;
-      t.phone = wa;
-      t.emergency = emergency;
-      t.deposit = deposit;
-      t.startDate = entryDate;
-      if (targetRoom) {
-        t.roomNumber = targetRoom.number;
-        t.rent = targetRoom.price;
-      }
-      showToast(`Data penghuni ${name} berhasil diperbarui!`, "success");
-    }
-  } else {
-    // Mode Tambah Baru
-    if (!targetRoom) {
-      showToast("Pilih unit kamar kost yang akan disewa!", "warning");
-      return;
-    }
-
-    const newId = "TNT-" + Date.now().toString().slice(-4);
-    if (!state.dummyTenants) state.dummyTenants = [];
-    state.dummyTenants.push({
-      id: newId,
-      roomNumber: targetRoom.number,
-      name: name,
-      phone: wa,
-      emergency: emergency,
-      startDate: entryDate || new Date().toISOString().split("T")[0],
-      deposit: deposit,
-      rent: targetRoom.price,
-      status: "ACTIVE",
-      ktp: ""
-    });
-
-    // Ubah kamar menjadi OCCUPIED
-    targetRoom.status = "OCCUPIED";
-    targetRoom.tenant = name;
-    targetRoom.phone = wa;
-    targetRoom.dueDate = entryDate ? formatDateDMY(entryDate) : formatDateDMY(new Date().toISOString().split("T")[0]);
-
-    showToast(`Penghuni ${name} berhasil diregistrasi di Kamar ${targetRoom.number}!`, "success");
-  }
-
-  saveDummyState();
-  closeModal("modalOnboard");
-  updateDashboardUI();
-  renderRoomMatrix(state.rooms);
-  renderMasterTenantsTable();
-  populateRoomSelectDropdowns();
-}
-
-// ==================== TAGIHAN BULANAN CRUD & KWITANSI ====================
-function prevInvoicePage() {
-  if (state.pagination.invoicePage > 1) {
-    state.pagination.invoicePage--;
-    renderMasterInvoicesTable();
-  }
-}
-
-function nextInvoicePage() {
-  state.pagination.invoicePage++;
-  renderMasterInvoicesTable();
-}
-
-function filterMasterInvoicesTable() {
-  state.pagination.invoicePage = 1;
-  renderMasterInvoicesTable();
-}
-
-function renderMasterInvoicesTable() {
-  const tbody = document.getElementById("invoiceMasterTableBody");
-  if (!tbody) return;
-
-  const search = (document.getElementById("searchInvoiceInput")?.value || "").toLowerCase().trim();
-  const statusFilter = document.getElementById("filterInvoiceStatusSelect")?.value || "ALL";
-
-  const allInvoices = state.dummyInvoices || [];
-  const filtered = allInvoices.filter(inv => {
-    const id = (inv.id || "").toLowerCase();
-    const room = (inv.roomNumber || "").toLowerCase();
-    const tenant = (inv.tenantName || "").toLowerCase();
-    const status = inv.status || "PENDING";
-
-    const matchesSearch = !search || id.includes(search) || room.includes(search) || tenant.includes(search);
-    const matchesStatus = statusFilter === "ALL" || status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const perPage = state.pagination.invoicePerPage || 5;
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  if (state.pagination.invoicePage > totalPages) state.pagination.invoicePage = totalPages;
-  if (state.pagination.invoicePage < 1) state.pagination.invoicePage = 1;
-
-  const startIdx = (state.pagination.invoicePage - 1) * perPage;
-  const pagedInvoices = filtered.slice(startIdx, startIdx + perPage);
-
-  const footerInfo = document.getElementById("invoiceTableFooterInfo");
-  if (footerInfo) {
-    footerInfo.innerText = `Menampilkan ${filtered.length > 0 ? startIdx + 1 : 0} - ${Math.min(startIdx + perPage, filtered.length)} dari total ${filtered.length} riwayat tagihan`;
-  }
-
-  const pageNumEl = document.getElementById("invoicePageNumber");
-  if (pageNumEl) pageNumEl.innerText = `Hal ${state.pagination.invoicePage} dari ${totalPages}`;
-
-  const btnPrev = document.getElementById("btnPrevInvoicePage");
-  const btnNext = document.getElementById("btnNextInvoicePage");
-  if (btnPrev) btnPrev.disabled = state.pagination.invoicePage <= 1;
-  if (btnNext) btnNext.disabled = state.pagination.invoicePage >= totalPages;
-
-  if (pagedInvoices.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" class="p-8 text-center text-slate-400">
-          <div class="flex flex-col items-center justify-center gap-1.5">
-            <span class="text-3xl">🧾</span>
-            <b class="text-slate-700">Tidak ada riwayat tagihan yang cocok</b>
-            <span class="text-xs text-slate-400">Silakan sesuaikan kata kunci pencarian atau filter status.</span>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = pagedInvoices.map(inv => {
-    const isPaid = inv.status === "PAID";
-    const statusBadge = isPaid
-      ? '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">LUNAS</span>'
-      : '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">PENDING</span>';
-
-    return `
-      <tr class="hover:bg-slate-50/80 transition-colors">
-        <td class="p-3.5 font-mono font-bold text-slate-900 text-xs">${inv.id}</td>
-        <td class="p-3.5 font-black text-brand-600 font-mono text-sm">Kamar ${inv.roomNumber}</td>
-        <td class="p-3.5 font-bold text-slate-800">${inv.tenantName}</td>
-        <td class="p-3.5 font-mono text-slate-600 text-xs">${formatDateDMY(inv.dueDate)}</td>
-        <td class="p-3.5 font-mono font-black text-slate-900">${formatRupiah(inv.total)}</td>
-        <td class="p-3.5">${statusBadge}</td>
-        <td class="p-3.5 text-right">
-          <div class="flex items-center justify-end gap-1.5">
-            <button onclick="navigateTo('/kwitansi?token=${inv.token || inv.id}')" title="Buka Kwitansi Modern"
-              class="px-2.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-2xs">
-              <span>🧾</span> Kwitansi
-            </button>
-            <button onclick="editInvoiceModal('${inv.id}')" title="Edit Tagihan"
-              class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold transition-all">
-              ✏️
-            </button>
-            <button onclick="deleteInvoice('${inv.id}')" title="Hapus Tagihan"
-              class="p-1.5 hover:bg-rose-50 text-rose-600 rounded-lg text-xs font-bold transition-all">
-              🗑️
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// Override function lama renderMasterInvoices agar kompatibel
-function renderMasterInvoices(invoices) {
-  if (invoices && invoices.length > 0) {
-    state.dummyInvoices = invoices.map(inv => ({
-      id: inv[0],
-      token: inv[2] || inv[0],
-      roomNumber: inv[3],
-      tenantName: inv[5],
-      dueDate: inv[6],
-      baseRent: inv[7] || inv[11],
-      electricCost: inv[8] || 0,
-      total: inv[11],
-      status: inv[12]
-    }));
-    saveDummyState();
-  }
-  renderMasterInvoicesTable();
-}
-
-// Toggle Token Listrik Mandiri di Modal Billing
-function toggleTokenListrikInput(hasToken) {
-  const container = document.getElementById("meterInputsContainer");
-  if (container) {
-    if (hasToken) {
-      container.classList.add("opacity-40", "pointer-events-none");
-    } else {
-      container.classList.remove("opacity-40", "pointer-events-none");
-    }
-  }
-  calculateBillingTotal();
-}
-
-function updateBillingPeriodValue() {
-  const m = document.getElementById("billingPeriodMonth")?.value || "Oktober";
-  const y = document.getElementById("billingPeriodYear")?.value || "2026";
-  const periodText = `${m} ${y}`;
-  const sub = document.getElementById("billingModalSubtitle");
-  if (sub) sub.innerText = `Perhitungan sewa dan meteran listrik periode ${periodText}`;
-}
-
-async function editInvoiceModal(id) {
-  const inv = (state.dummyInvoices || []).find(x => x.id === id);
-  if (!inv) return;
-
-  const newStatus = inv.status === "PAID" ? "PENDING" : "PAID";
-  const confirmed = await showCustomConfirm({
-    title: "Ubah Status Tagihan?",
-    message: `Ubah status pembayaran tagihan <b>${inv.id}</b> (${inv.tenantName}) menjadi <b class="${newStatus === 'PAID' ? 'text-emerald-600' : 'text-rose-600'}">${newStatus}</b>?`,
-    confirmText: `Ubah ke ${newStatus}`,
-    cancelText: "Batal",
-    type: newStatus === "PAID" ? "success" : "warning",
-    icon: newStatus === "PAID" ? "✅" : "⏳"
-  });
-
-  if (!confirmed) return;
-
-  inv.status = newStatus;
-  saveDummyState();
-  updateDashboardUI();
-  renderMasterInvoicesTable();
-  showToast(`Status tagihan ${inv.id} diubah menjadi ${newStatus}!`, "success");
-}
-
-async function deleteInvoice(id) {
-  const inv = (state.dummyInvoices || []).find(x => x.id === id);
-  if (!inv) return;
-
-  const confirmed = await showCustomConfirm({
-    title: "Hapus Tagihan?",
-    message: `Apakah Anda yakin ingin menghapus catatan tagihan <b>${inv.id}</b> (${inv.tenantName})?`,
-    confirmText: "Ya, Hapus Tagihan",
-    cancelText: "Batal",
-    type: "danger",
-    icon: "🗑️"
-  });
-
-  if (!confirmed) return;
-
-  state.dummyInvoices = (state.dummyInvoices || []).filter(x => x.id !== id);
-  saveDummyState();
-  updateDashboardUI();
-  renderMasterInvoicesTable();
-  showToast(`Tagihan ${inv.id} berhasil dihapus!`, "success");
-}
-
-// ==================== BUKU KAS OPERASIONAL & PER-ROOM FILTER ====================
-function toggleExpenseRoomField() {
-  const cat = document.getElementById("expenseCategory")?.value;
-  const isRoomCheck = document.getElementById("expenseIsRoomRepair");
-  if (isRoomCheck) {
-    if (cat === "MAINTENANCE") {
-      isRoomCheck.checked = true;
-      toggleExpenseRoomSelect(true);
-    }
-  }
-}
-
-function toggleExpenseRoomSelect(isChecked) {
-  const container = document.getElementById("expenseRoomSelectContainer");
-  if (container) {
-    if (isChecked) {
-      container.classList.remove("hidden");
-      populateRoomSelectDropdowns();
-    } else {
-      container.classList.add("hidden");
-    }
-  }
-}
-
-function filterMasterExpensesTable() {
-  const filterRoom = document.getElementById("filterExpenseRoomSelect")?.value || "ALL";
-  const tbody = document.getElementById("expenseTableBody");
-  if (!tbody) return;
-
-  const allExpenses = state.dummyExpenses || [];
-  const filtered = allExpenses.filter(x => {
-    if (filterRoom === "ALL") return true;
-    return (x.room || "").toString() === filterRoom;
-  });
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="p-8 text-center text-slate-400">
-          <div class="flex flex-col items-center justify-center gap-1.5">
-            <span class="text-3xl">💸</span>
-            <b class="text-slate-700">Tidak ada data pengeluaran untuk unit kamar ini</b>
-            <span class="text-xs text-slate-400">Semua riwayat pengeluaran kas tercatat rapi.</span>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = filtered.map(x => `
-    <tr class="hover:bg-slate-50/80 transition-colors">
-      <td class="p-3 text-slate-600 font-mono text-xs">${formatDateDMY(x.date)}</td>
-      <td class="p-3 font-sans font-bold text-slate-800">
-        ${x.category}
-        ${x.room && x.room !== 'Semua Unit' ? `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-brand-700 border border-indigo-100">Kamar ${x.room}</span>` : ''}
-      </td>
-      <td class="p-3 font-sans text-slate-700">${x.description}</td>
-      <td class="p-3 font-sans text-slate-500 font-semibold">${x.month || '-'} ${x.year || ''}</td>
-      <td class="p-3 text-right font-black font-mono text-rose-600">${formatRupiah(x.amount)}</td>
-    </tr>
-  `).join("");
-}
-
-function renderMasterExpenses(expenses) {
-  if (expenses && expenses.length > 0) {
-    state.dummyExpenses = expenses.map(x => ({
-      id: x[0],
-      date: x[2],
-      category: x[3],
-      description: x[4],
-      room: "Semua Unit",
-      month: "Oktober",
-      year: "2026",
-      amount: x[5]
-    }));
-    saveDummyState();
-  }
-  filterMasterExpensesTable();
-}
-
-// Override submitExpenseRecord agar mencatat kamar perbaikan & periode bulan/tahun
-async function submitExpenseRecord() {
-  const desc = document.getElementById("expenseDescription").value.trim();
-  const amount = Number(document.getElementById("expenseAmount").value) || 0;
-  const category = document.getElementById("expenseCategory").value;
   const isRoomRepair = document.getElementById("expenseIsRoomRepair")?.checked;
   const room = isRoomRepair ? (document.getElementById("expenseRoomSelect")?.value || "Semua Unit") : "Semua Unit";
   const month = document.getElementById("expenseMonth")?.value || "Oktober";
@@ -4444,6 +2461,24 @@ async function submitExpenseRecord() {
   if (!desc || amount <= 0) {
     showToast("Keterangan dan nominal pengeluaran kas wajib diisi!", "warning");
     return;
+  }
+
+  const btn = document.getElementById("btnSubmitExpense");
+  if (btn) { btn.disabled = true; btn.innerText = "Menyimpan ke Sheets..."; }
+
+  try {
+    const res = await callApi("recordExpense", {
+      category: category,
+      description: desc + (room !== "Semua Unit" ? ` (Kamar ${room})` : ""),
+      amount: amount
+    });
+    if (res.status === "success") {
+      showToast(`Pengeluaran ${formatRupiah(amount)} tersimpan ke Google Sheets!`, "success");
+    }
+  } catch (err) {
+    console.warn("GAS API offline/gagal, mencatat ke state lokal:", err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerText = "Simpan Transaksi Kas"; }
   }
 
   const newId = "EXP-" + Date.now().toString().slice(-4);
@@ -4574,6 +2609,20 @@ async function submitAddStaff() {
   if (state.dummyStaff.length >= 2) {
     showToast("Kuota akun staf lapangan sudah penuh (Maksimal 2 akun)!", "warning");
     return;
+  }
+
+  const btn = document.getElementById("btnSubmitStaff");
+  if (btn) { btn.disabled = true; btn.innerText = "Menyimpan ke Sheets..."; }
+
+  try {
+    const res = await callApi("saveStaff", { name: name, phone: phone, pin: pin });
+    if (res.status === "success") {
+      showToast(`Akun staf ${name} tersimpan ke Google Sheets!`, "success");
+    }
+  } catch (err) {
+    console.warn("GAS API offline/gagal, mencatat ke state lokal:", err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerText = "Simpan Akun Staf"; }
   }
 
   const newId = "STF-0" + (state.dummyStaff.length + 1);
